@@ -1,0 +1,50 @@
+# Arch ${projectVersion}
+# important:
+# - options ending with "?" are completely optional.
+# - most options support colour codes (&)
+
+discord_bot:
+  token:
+  status?: Minecraft
+# channel to relay message to and from.
+# this channel will also be used for other things, like getting server information.
+channel:
+  id: 789846502058229780
+  # sets the channel topic on startup.
+  # [papi support, requires player?]
+  topic?: Creeper
+# placeholderapi requires a player in context when using their placeholders
+# this ensures there are no issues and makes everything easier when a player can't normally be provided.
+# options that depend on this option won't be available otherwise (requirement would be indicated)
+# expects a uuid.
+player?:
+
+# Authentication Configuration
+authentication:
+  # Discord role required to join the server.
+  required_role?:
+  # time it takes for codes to expire (in minutes)
+  code_expires: 5
+  message:
+    # message shown to player if they haven't linked their account.
+    # + {{bot}} - bot's tag (bot#1234) the user needs to direct-message their given code.
+    # + {{code}} - code player needs to link their account.
+    # + {{code.ttl}} - time, in minutes, it takes for a code to expire.
+    # + {{server}} - Discord server name.
+    not_linked?: "You haven't linked your Discord account yet!\nTo do so, DM the following code to &d{{bot}}&r.\n\n&d{{code}}\n&7(This code will expire in {{code.ttl}} minutes)"
+    # message shown to player if they're not in the channel specified earlier's Discord server.
+    # if empty, won't require the player to be in the server.
+    # + {{server}} - Discord server name.
+    not_in_server?:
+    # message shown to player if they don't have the required role specified earlier.
+    # + {{server}} - Discord server name.
+    # + {{role}} - required role name.
+    absent_role?:
+
+message_format:
+  chat?: "&3{{username}}#{{discrim}}&7: {{message}}"
+  join?: "{{player}} joined the server"
+  leave?: "{{player}} left the server"
+  death?: "☠ {{message}}"
+
+version:
