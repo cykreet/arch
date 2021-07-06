@@ -31,62 +31,78 @@ public class PersistManager {
 			Connection connection = DriverManager.getConnection(url);
 			Statement statement = connection.createStatement();
 			statement.execute(sql);
+			statement.close();
 			this.connection = connection;
 		} catch (SQLException e) {
 			LoggerUtil.errorAndExit("Failed to establish database connection.");
 		}
-
-		return;
 	}
 
-	public String getMemberId(UUID playerUUID) {
+	public String getMemberId(@NotNull UUID playerUUID) {
 		String sql = String.format("SELECT * FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
+		String result;
 		try (Statement statement = this.connection.createStatement()) {
 			ResultSet resultSet = statement.executeQuery(sql);
-			return resultSet.getString("discord_id");
-		} catch (Exception e) {
-			return null;
+			result = resultSet.getString("discord_id");
+			resultSet.close();
+		} catch (SQLException e) {
+			result = null;
 		}
+
+		return result;
 	}
 
-	public UUID getPlayerId(String discordId) {
+	public UUID getPlayerId(@NotNull String discordId) {
 		String sql = String.format("SELECT * FROM linked_users WHERE discord_id = \"%s\";", discordId);
+		UUID result;
 		try (Statement statement = this.connection.createStatement()) {
 			ResultSet resultSet = statement.executeQuery(sql);
-			return UUID.fromString(resultSet.getString("player_uuid"));
-		} catch (Exception e) {
-			return null;
+			result = UUID.fromString(resultSet.getString("player_uuid"));
+			resultSet.close();
+		} catch (SQLException e) {
+			result = null;
 		}
+
+		return result;
 	}
 
-	public boolean contains(String discordId) {
+	public boolean contains(@NotNull String discordId) {
 		String sql = String.format("SELECT * FROM linked_users WHERE discord_id = \"%s\";", discordId);
+		boolean result;
 		try (Statement statment = this.connection.createStatement()) {
-			ResultSet ResultSet = statment.executeQuery(sql);
-			return ResultSet.next();
+			ResultSet resultSet = statment.executeQuery(sql);
+			result = resultSet.next();
+			resultSet.close();
 		} catch (SQLException e) {
-			return false;
+			result = false;
 		}
+
+		return result;
 	}
 
-	public boolean contains(UUID playerUUID) {
+	public boolean contains(@NotNull UUID playerUUID) {
 		String sql = String.format("SELECT * FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
+		boolean result;
 		try (Statement statement = this.connection.createStatement()) {
 			ResultSet resultSet = statement.executeQuery(sql);
-			return resultSet.next();
+			result = resultSet.next();
+			resultSet.close();
 		} catch (SQLException e) {
-			return false;
+			result = false;
 		}
+
+		return result;
 	}
 
-	public boolean insert(UUID playerUUID, String discordId) {
+	public boolean insert(@NotNull UUID playerUUID, @NotNull String discordId) {
 		String sql = String.format(
 			"INSERT INTO linked_users (player_uuid, discord_id) VALUES (\"%h\", \"%s\");", 
 			playerUUID, 
 			discordId
 		);
 		try (Statement statement = this.connection.createStatement()) {
-			statement.execute(sql);
+			statement.executeQuery(sql);
+			statement.close();
 			return true;
 		} catch (SQLException e) {
 			LoggerUtil.error("Failed to insert user into database:\n" + e.getStackTrace());
@@ -94,19 +110,21 @@ public class PersistManager {
 		}
 	}
 
-	public void removeByPlayerId(UUID playerUUID) {
+	public void removeByPlayerId(@NotNull UUID playerUUID) {
 		String sql = String.format("DELETE FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
 		try (Statement statement = this.connection.createStatement()) {
 			statement.executeUpdate(sql);
+			statement.close();
 		} catch (SQLException e) {
 			LoggerUtil.error("Failed to remove user from database: \n" + e.getStackTrace());
 		}
 	}
 
-	public void removeByMemberId(String discordId) {
+	public void removeByMemberId(@NotNull String discordId) {
 		String sql = String.format("DELETE FROM linked_users WHERE discord_id = \"%s\";", discordId);
 		try (Statement statement = this.connection.createStatement()) {
 			statement.executeUpdate(sql);
+			statement.close();
 		} catch (SQLException e) {
 			LoggerUtil.error("Failed to remove user from database: \n" + e.getStackTrace());
 		}
@@ -120,8 +138,6 @@ public class PersistManager {
 		} catch (SQLException e) {
 			LoggerUtil.error("Failed to close database connection.");
 		}
-
-		return;
 	}
 
 	public void unlinkPlayer(@NotNull UUID playerId) {
@@ -131,7 +147,5 @@ public class PersistManager {
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> {
 			offlinePlayer.getPlayer().kickPlayer("Unlinked Discord account.");
 		});
-		
-		return;
 	}
 }

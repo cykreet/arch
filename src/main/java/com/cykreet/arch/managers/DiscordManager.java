@@ -80,6 +80,7 @@ public class DiscordManager {
 
 		if (targetWebhook != null) this.webhook = targetWebhook;
 		else this.webhook = channel.createWebhook(name).submit().join();
+		return;
 	}
 
 	public void sendMessage(@NotNull String name, @NotNull String avatar, @NotNull String message) {
@@ -99,15 +100,17 @@ public class DiscordManager {
 	}
 
 	public void sendMessage(@NotNull String message) {
-		SelfUser selfUser = this.client.getSelfUser();
-		String avatar = selfUser.getEffectiveAvatarUrl();
-		String name = selfUser.getName();
-		this.sendMessage(name, avatar, message);
+		TextChannel channel = (TextChannel) this.getChannel();
+		channel.sendMessage(message);
+	}
+
+	public GuildChannel getChannel() {
+		String configChannelId = ConfigUtil.getString(ConfigPath.CHANNEL_ID);
+		return this.client.getGuildChannelById(configChannelId);
 	}
 
 	public Guild getGuild() {
-		String configChannelId = ConfigUtil.getString(ConfigPath.CHANNEL_ID);
-		GuildChannel channel = this.client.getGuildChannelById(configChannelId);
+		GuildChannel channel = this.getChannel();
 		return channel.getGuild();
 	}
 

@@ -32,7 +32,6 @@ public class ConfigManager {
 
 	public void setPapiPlayer(OfflinePlayer player) {
 		papiPlayer = player;
-		return;
 	}
 
 	public OfflinePlayer getPapiPlayer() {

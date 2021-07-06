@@ -84,8 +84,6 @@ public class PlayerPreLoginListener implements Listener {
 			event.disallow(Result.KICK_OTHER, kickMessage);
 			return;
 		}
-
-		return;
 	}
 
 	private static String generateRandomCode() {

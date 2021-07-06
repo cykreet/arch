@@ -100,7 +100,6 @@ public class DiscordListener extends ListenerAdapter {
 			playerName
 		);
 		channel.sendMessage(message).queue();
-		return;
 	}
 
 	@Override
