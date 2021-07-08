@@ -1,6 +1,6 @@
 package com.cykreet.arch.util;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
@@ -15,7 +15,7 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 
 public class ConfigUtil {
-	private static ConfigManager configManager = Arch.getInstance().configManager;
+	private static ConfigManager configManager = Arch.getManager(ConfigManager.class);
 	private static FileConfiguration config = configManager.getConfig();
 
 	public static boolean ensureAuthenticationEnabled() {
@@ -44,7 +44,7 @@ public class ConfigUtil {
 		return getString(path, null);
 	}
 
-	public static String getString(@NotNull ConfigPath path, @Nullable HashMap<String, String> placeholders) {
+	public static String getString(@NotNull ConfigPath path, @Nullable Map<String, String> placeholders) {
 		String configPath = path.label;
 		String configString = config.getString(configPath);
 		boolean isOptional = configPath.endsWith("?");
@@ -59,7 +59,7 @@ public class ConfigUtil {
 		return ChatColor.translateAlternateColorCodes('&', formatted);
 	}
 
-	private static String formatPlaceholders(@NotNull String input, @Nullable HashMap<String, String> placeholders) {
+	private static String formatPlaceholders(@NotNull String input, @Nullable Map<String, String> placeholders) {
 		if (placeholders != null) {
 			for (Entry<String, String> placeholder: placeholders.entrySet()) {
 				String placeholderKey = "{{" + placeholder.getKey() + "}}";

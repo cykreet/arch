@@ -15,7 +15,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class PlayerChatListener implements Listener {
-	private DiscordManager discord = Arch.getInstance().discord;
+	private DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 
 	@EventHandler
 	private void onPlayerChat(AsyncPlayerChatEvent event) {
@@ -28,6 +28,7 @@ public class PlayerChatListener implements Listener {
 
 		// todo: resolve user mentions
 		String message = event.getMessage();
-		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> this.discord.sendMessage(playerName, playerAvatar, message));
+		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
+			this.discordManager.sendMessage(playerName, playerAvatar, message));
 	}
 }

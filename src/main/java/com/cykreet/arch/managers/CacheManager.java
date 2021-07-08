@@ -6,10 +6,10 @@ import java.util.concurrent.TimeUnit;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-public class CacheManager {
+public class CacheManager extends Manager {
 	private Cache<UUID, String> cache;
 
-	public CacheManager(int expires) {
+	public void createCache(int expires) {
 		this.cache = Caffeine.newBuilder()
 			.expireAfterWrite(expires, TimeUnit.MINUTES)
 			.maximumSize(100)

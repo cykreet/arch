@@ -5,13 +5,13 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
 
-public class ConfigManager {
+public class ConfigManager extends Manager {
 	private static FileConfiguration config;
 	private static boolean papiSupport;
 	private static OfflinePlayer papiPlayer;
 	private static boolean authenticationEnabled;
-
-	public ConfigManager(FileConfiguration file) {
+	
+	public void setup(FileConfiguration file) {
 		config = file;
 		this.reload();
 	}

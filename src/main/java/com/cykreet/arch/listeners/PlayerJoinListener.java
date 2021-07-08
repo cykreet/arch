@@ -14,7 +14,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 public class PlayerJoinListener implements Listener {
-	private final DiscordManager discord = Arch.getInstance().discord;
+	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 
 	@EventHandler
 	private void onPlayerJoin(PlayerJoinEvent event) {
@@ -25,6 +25,7 @@ public class PlayerJoinListener implements Listener {
 		placeholders.put("player", playerName);
 
 		String joinMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_JOIN, placeholders);
-		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> this.discord.sendMessage(joinMessage));
+		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
+			this.discordManager.sendMessage(joinMessage));
 	}
 }

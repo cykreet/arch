@@ -5,6 +5,7 @@ import java.util.Random;
 import java.util.UUID;
 
 import com.cykreet.arch.Arch;
+import com.cykreet.arch.managers.CacheManager;
 import com.cykreet.arch.managers.ConfigManager;
 import com.cykreet.arch.managers.DiscordManager;
 import com.cykreet.arch.managers.PersistManager;
@@ -27,10 +28,10 @@ import net.dv8tion.jda.api.entities.SelfUser;
 
 public class PlayerPreLoginListener implements Listener {
 	private static final char[] characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
-	private final Cache<UUID, String> codesCache = Arch.getInstance().codesCache.getCache();
-	private final DiscordManager discord = Arch.getInstance().discord;
-	private final PersistManager database = Arch.getInstance().database;
-	private final ConfigManager configManager = Arch.getInstance().configManager;
+	private final Cache<UUID, String> codesCache = Arch.getManager(CacheManager.class).getCache();
+	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
+	private final ConfigManager configManager = Arch.getManager(ConfigManager.class);
+	private final PersistManager database = Arch.getManager(PersistManager.class);
 
 	@EventHandler(priority = EventPriority.LOW)
 	private void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
@@ -41,7 +42,7 @@ public class PlayerPreLoginListener implements Listener {
 		if (Bukkit.getBannedPlayers().contains(player)) return;
 
 		UUID playerUUID = event.getUniqueId();
-		Guild guild = this.discord.getGuild();
+		Guild guild = this.discordManager.getGuild();
 		if (!this.database.contains(playerUUID)) {
 			String code = this.codesCache.getIfPresent(playerUUID);
 			if (code == null) {
@@ -51,7 +52,7 @@ public class PlayerPreLoginListener implements Listener {
 
 			HashMap<String, String> placeholders = new HashMap<String, String>();
 			int codeExpiry = ConfigUtil.getInt(ConfigPath.AUTH_CODE_EXPIRE);
-			SelfUser selfUser = this.discord.getSelfUser();
+			SelfUser selfUser = this.discordManager.getSelfUser();
 			placeholders.put("code", code);
 			placeholders.put("bot", selfUser.getAsTag());
 			placeholders.put("code.ttl", Integer.toString(codeExpiry));
@@ -74,7 +75,7 @@ public class PlayerPreLoginListener implements Listener {
 		}
 
 		if (!ConfigUtil.contains(ConfigPath.AUTH_REQUIRED_ROLE)) return;
-		Role requiredRole = this.discord.getRequiredRole();
+		Role requiredRole = this.discordManager.getRequiredRole();
 		if (!guildMember.getRoles().contains(requiredRole)) {
 			HashMap<String, String> placeholders = new HashMap<String, String>();
 			placeholders.put("server", guild.getName());

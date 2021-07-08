@@ -10,13 +10,14 @@ import com.cykreet.arch.util.ConfigUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 
 public class PlayerDeathListener implements Listener {
-	private DiscordManager discord = Arch.getInstance().discord;
+	private DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGH)
 	private void onPlayerDeath(PlayerDeathEvent event) {
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_DEATH)) return;
 		HashMap<String, String> placeholders = new HashMap<String, String>();
@@ -26,6 +27,7 @@ public class PlayerDeathListener implements Listener {
 		placeholders.put("message", event.getDeathMessage());
 
 		String deathMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_DEATH, placeholders);
-		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> this.discord.sendMessage(deathMessage));
+		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
+			this.discordManager.sendMessage(deathMessage));
 	}
 }

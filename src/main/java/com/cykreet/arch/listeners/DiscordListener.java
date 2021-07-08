@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.Map.Entry;
 
 import com.cykreet.arch.Arch;
+import com.cykreet.arch.managers.CacheManager;
 import com.cykreet.arch.managers.ConfigManager;
 import com.cykreet.arch.managers.DiscordManager;
 import com.cykreet.arch.managers.PersistManager;
@@ -28,10 +29,10 @@ import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class DiscordListener extends ListenerAdapter {
-	private final DiscordManager discord = Arch.getInstance().discord;
-	private final PersistManager database = Arch.getInstance().database;
-	private final ConfigManager configManager = Arch.getInstance().configManager;
-	private final Cache<UUID, String> codesCache = Arch.getInstance().codesCache.getCache();
+	private final Cache<UUID, String> codesCache = Arch.getManager(CacheManager.class).getCache();
+	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
+	private final ConfigManager configManager = Arch.getManager(ConfigManager.class);
+	private final PersistManager database = Arch.getManager(PersistManager.class);
 	private final Cache<String, Boolean> cooldownCache = Caffeine.newBuilder()
 		.expireAfterWrite(Duration.ofSeconds(3))
 		.maximumSize(20)
@@ -42,7 +43,7 @@ public class DiscordListener extends ListenerAdapter {
 		SelfUser bot = event.getJDA().getSelfUser();
 		String configChannel = ConfigUtil.getString(ConfigPath.CHANNEL_ID);
 		TextChannel channel = event.getJDA().getTextChannelById(configChannel);
-		this.discord.ensureWebhook(channel);
+		this.discordManager.ensureWebhook(channel);
 
 		String configChannelTopic = ConfigUtil.getString(ConfigPath.CHANNEL_TOPIC);
 		channel.getManager().setTopic(configChannelTopic).queue();
@@ -105,10 +106,11 @@ public class DiscordListener extends ListenerAdapter {
 	@Override
 	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_CHAT)) return;
-		if (event.isWebhookMessage()) return;
+		User user = event.getAuthor();
+		SelfUser selfUser = this.discordManager.getSelfUser();
+		if (event.isWebhookMessage() || user.getId() == selfUser.getId()) return;
 
 		HashMap<String, String> placeholders = new HashMap<String, String>();
-		User user = event.getAuthor();
 		String userName = user.getName();
 		String userDiscrim = user.getDiscriminator();
 		String content = event.getMessage().getContentStripped();

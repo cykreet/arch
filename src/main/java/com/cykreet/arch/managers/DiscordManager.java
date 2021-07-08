@@ -27,7 +27,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-public class DiscordManager {
+public class DiscordManager extends Manager {
 	private Webhook webhook;
 	private JDA client;
 	private final EnumSet<CacheFlag> disabledCaches = EnumSet.of(
@@ -101,7 +101,7 @@ public class DiscordManager {
 
 	public void sendMessage(@NotNull String message) {
 		TextChannel channel = (TextChannel) this.getChannel();
-		channel.sendMessage(message);
+		channel.sendMessage(message).queue();
 	}
 
 	public GuildChannel getChannel() {

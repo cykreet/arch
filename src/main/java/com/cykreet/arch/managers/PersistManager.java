@@ -15,17 +15,13 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
-public class PersistManager {
+public class PersistManager extends Manager {
 	private Connection connection;
-	private File file;
-
-	public PersistManager(@NotNull File path, @NotNull String name) {
-		this.file = new File(path, name);
-	}
 	
-	public void connect() {
-		if (connection != null) return; 
-		String url = "jdbc:sqlite:" + this.file.getAbsolutePath();
+	public void connect(@NotNull File path, @NotNull String name) {
+		if (connection != null) return;
+		File file = new File(path, name);
+		String url = "jdbc:sqlite:" + file.getAbsolutePath();
 		String sql = "CREATE TABLE IF NOT EXISTS linked_users (player_uuid BLOB PRIMARY KEY, discord_id TEXT NOT NULL);";
 		try {
 			Connection connection = DriverManager.getConnection(url);
