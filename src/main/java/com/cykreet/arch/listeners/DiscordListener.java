@@ -57,9 +57,9 @@ public class DiscordListener extends ListenerAdapter {
 
 		User user = event.getAuthor();
 		String userId = user.getId();
+		if (user.isBot()) return;
 		if (this.cooldownCache.getIfPresent(userId) != null) return;
 		this.cooldownCache.put(userId, true);
-		if (user.isBot()) return;
 
 		PrivateChannel channel = event.getChannel();
 		String messageContent = event.getMessage().getContentStripped();

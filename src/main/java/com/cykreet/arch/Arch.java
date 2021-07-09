@@ -62,8 +62,8 @@ public class Arch extends JavaPlugin {
 		String botToken = ConfigUtil.getString(ConfigPath.BOT_TOKEN);
 		String activity = ConfigUtil.getString(ConfigPath.BOT_STATUS);
 		if (botToken == null) return;
-		discordManager.login(botToken, activity);
-		database.connect(this.getDataFolder(), "linked-users.db");
+		this.discordManager.login(botToken, activity);
+		this.database.connect(this.getDataFolder(), "linked-users.db");
 	}
 
 	@Override
