@@ -23,6 +23,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import net.dv8tion.jda.api.entities.SelfUser;
+
 public class Arch extends JavaPlugin {
 	private static Map<Class<Manager>, Manager> managers = new HashMap<>();
 	private DiscordManager discordManager;
@@ -63,6 +65,17 @@ public class Arch extends JavaPlugin {
 		String activity = ConfigUtil.getString(ConfigPath.BOT_STATUS);
 		if (botToken == null) return;
 		this.discordManager.login(botToken, activity);
+		
+		// disable if the bot hasn't been invited to the relevant guild
+		// by checking if we have access to the provided channel
+		if (this.discordManager.getChannel() == null) {
+			SelfUser selfUser = this.discordManager.getSelfUser();
+			String inviteLink = String.format("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=805325824", selfUser.getId());
+			String message = String.format("Discord bot is not in the relevant server, please invite the bot through the following link: %s", inviteLink);
+			LoggerUtil.errorAndExit(message);
+			return;
+		}
+
 		this.database.connect(this.getDataFolder(), "linked-users.db");
 	}
 
