@@ -11,14 +11,16 @@ import com.cykreet.arch.util.WebhookUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 public class PlayerChatListener implements Listener {
 	private DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 
-	@EventHandler
+	@EventHandler(priority = EventPriority.MONITOR)
 	private void onPlayerChat(AsyncPlayerChatEvent event) {
+		if (event.isCancelled()) return;
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_CHAT)) return;
 		HashMap<String, String> placeholders = new HashMap<String, String>();
 		Player player = event.getPlayer();

@@ -44,6 +44,5 @@ public class ConfigManager extends Manager {
 
 	public void setAuthenticationEnabled(boolean enable) {
 		authenticationEnabled = enable;
-		return;
 	}
 }

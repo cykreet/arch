@@ -17,7 +17,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 public class PlayerDeathListener implements Listener {
 	private DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 
-	@EventHandler(priority = EventPriority.HIGH)
+	@EventHandler(priority = EventPriority.MONITOR)
 	private void onPlayerDeath(PlayerDeathEvent event) {
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_DEATH)) return;
 		HashMap<String, String> placeholders = new HashMap<String, String>();

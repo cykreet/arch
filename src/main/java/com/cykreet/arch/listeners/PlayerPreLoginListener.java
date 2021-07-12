@@ -27,11 +27,11 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.SelfUser;
 
 public class PlayerPreLoginListener implements Listener {
-	private static final char[] characters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
 	private final Cache<UUID, String> codesCache = Arch.getManager(CacheManager.class).getCache();
 	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 	private final ConfigManager configManager = Arch.getManager(ConfigManager.class);
 	private final PersistManager database = Arch.getManager(PersistManager.class);
+	private static final char[] characters = "0213546879".toCharArray();
 
 	@EventHandler(priority = EventPriority.LOW)
 	private void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
@@ -46,7 +46,8 @@ public class PlayerPreLoginListener implements Listener {
 		if (!this.database.contains(playerUUID)) {
 			String code = this.codesCache.getIfPresent(playerUUID);
 			if (code == null) {
-				code = generateRandomCode();
+				String codePrefix = player.getName().substring(0).toUpperCase();
+				code = codePrefix.concat("-" + generateRandomCode());
 				this.codesCache.put(playerUUID, code);
 			}
 
@@ -63,9 +64,10 @@ public class PlayerPreLoginListener implements Listener {
 			return;
 		}
 
+		if (!ConfigUtil.contains(ConfigPath.AUTH_MESSAGE_NOT_IN_SERVER)) return;
 		String discordId = this.database.getMemberId(playerUUID);
 		Member guildMember = guild.getMemberById(discordId);
-		if (ConfigUtil.contains(ConfigPath.AUTH_MESSAGE_NOT_IN_SERVER) && guildMember == null) {
+		if (guildMember == null) {
 			HashMap<String, String> placeholders = new HashMap<String, String>();
 			placeholders.put("server", guild.getName());
 

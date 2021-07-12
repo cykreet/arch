@@ -10,13 +10,14 @@ import com.cykreet.arch.util.ConfigUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 public class PlayerJoinListener implements Listener {
 	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 
-	@EventHandler
+	@EventHandler(priority = EventPriority.MONITOR)
 	private void onPlayerJoin(PlayerJoinEvent event) {
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_JOIN)) return;
 		HashMap<String, String> placeholders = new HashMap<String, String>();
