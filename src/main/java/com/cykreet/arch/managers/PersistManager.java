@@ -136,9 +136,19 @@ public class PersistManager extends Manager {
 		}
 	}
 
-	public void unlinkPlayer(@NotNull UUID playerId) {
-		this.removeByPlayerId(playerId);
-		OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerId);
+	public void unlinkPlayer(@NotNull String discordId) {
+		this.removeByMemberId(discordId);
+		UUID playerUUID = this.getPlayerId(discordId);
+		OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
+		if (!offlinePlayer.isOnline()) return;
+		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> {
+			offlinePlayer.getPlayer().kickPlayer("Unlinked Discord account.");
+		});
+	}
+
+	public void unlinkPlayer(@NotNull UUID playerUUID) {
+		this.removeByPlayerId(playerUUID);
+		OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
 		if (!offlinePlayer.isOnline()) return;
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> {
 			offlinePlayer.getPlayer().kickPlayer("Unlinked Discord account.");
