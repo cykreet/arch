@@ -25,6 +25,7 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 public class DiscordManager extends Manager {
@@ -49,6 +50,8 @@ public class DiscordManager extends Manager {
 			this.client = JDABuilder.create(this.intents)
 				.disableCache(this.disabledCaches)
 				.addEventListeners(new DiscordListener())
+				// could get kinda problematic with larger guild sizes
+				.setMemberCachePolicy(MemberCachePolicy.ALL)
 				.setActivity(Activity.playing(activity))
 				.setContextEnabled(false)
 				.setToken(token)
@@ -65,7 +68,6 @@ public class DiscordManager extends Manager {
 	public void logout() {
 		if (this.client == null) return;
 		this.client.shutdown();
-		return;
 	}
 
 	public void ensureWebhook(@NotNull TextChannel channel) {
@@ -80,7 +82,6 @@ public class DiscordManager extends Manager {
 
 		if (targetWebhook != null) this.webhook = targetWebhook;
 		else this.webhook = channel.createWebhook(name).submit().join();
-		return;
 	}
 
 	public void sendMessage(@NotNull String name, @NotNull String avatar, @NotNull String message) {
