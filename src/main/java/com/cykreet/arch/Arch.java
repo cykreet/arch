@@ -59,13 +59,15 @@ public class Arch extends JavaPlugin {
 		}
 		
 		String botToken = ConfigUtil.getString(ConfigPath.BOT_TOKEN);
-		String activity = ConfigUtil.getString(ConfigPath.BOT_STATUS);
+		// handled by config util
 		if (botToken == null) return;
+		
+		String activity = ConfigUtil.getString(ConfigPath.BOT_STATUS);
 		this.discordManager.login(botToken, activity);
 		
 		// disable if the bot hasn't been invited to the relevant guild
-		// by checking if we have access to the provided channel
-		if (this.discordManager.getChannel() == null) {
+		// by checking if we have access to the provided guild
+		if (this.discordManager.getGuild() == null) {
 			SelfUser selfUser = this.discordManager.getSelfUser();
 			String inviteLink = String.format("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=805325824", selfUser.getId());
 			String message = String.format("Discord bot is not in the relevant server, please invite the bot through the following link: %s", inviteLink);

@@ -112,6 +112,7 @@ public class DiscordManager extends Manager {
 
 	public Guild getGuild() {
 		GuildChannel channel = this.getChannel();
+		if (channel == null) return null;
 		return channel.getGuild();
 	}
 
