@@ -2,6 +2,5 @@
   "java.configuration.updateBuildConfiguration": "automatic",
   "yaml.schemas": {
     "https://json.schemastore.org/bukkit-plugin": "plugin.yml"
-  },
-  "java.format.settings.url": "eclipse-formatter.xml"
+  }
 }

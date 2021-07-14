@@ -44,23 +44,20 @@ public class Arch extends JavaPlugin {
 		this.discordManager = getManager(DiscordManager.class);
 		this.configManager = getManager(ConfigManager.class);
 		this.configManager.setup(this.getConfig());
-		int codeExpiry = ConfigUtil.getInt(ConfigPath.AUTH_CODE_EXPIRE);
-		this.cacheManager = getManager(CacheManager.class);
-		this.cacheManager.createCache(codeExpiry);
-
+		
 		this.registerListener(new PlayerPreLoginListener());
 		this.registerListener(new PlayerDeathListener());
 		this.registerListener(new PlayerChatListener());
 		this.registerListener(new PlayerJoinListener());
 		this.registerListener(new PlayerQuitListener());
-
+		
 		ConfigUtil.ensureAuthenticationEnabled();
 		String configPlayer = ConfigUtil.getString(ConfigPath.DEFAULT_PLAYER);
 		if (configPlayer != null) {
 			UUID defaultPlayer = UUID.fromString(configPlayer);
 			this.configManager.setPapiPlayer(Bukkit.getOfflinePlayer(defaultPlayer));
 		}
-
+		
 		String botToken = ConfigUtil.getString(ConfigPath.BOT_TOKEN);
 		String activity = ConfigUtil.getString(ConfigPath.BOT_STATUS);
 		if (botToken == null) return;
@@ -75,8 +72,11 @@ public class Arch extends JavaPlugin {
 			LoggerUtil.errorAndExit(message);
 			return;
 		}
-
+		
 		this.database.connect(this.getDataFolder(), "linked-users.db");
+		int codeExpiry = ConfigUtil.getInt(ConfigPath.AUTH_CODE_EXPIRE);
+		this.cacheManager = getManager(CacheManager.class);
+		this.cacheManager.createCache(codeExpiry);
 	}
 
 	@Override
