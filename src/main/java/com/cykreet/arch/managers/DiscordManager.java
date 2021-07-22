@@ -6,7 +6,10 @@ import java.util.List;
 
 import javax.security.auth.login.LoginException;
 
-import com.cykreet.arch.listeners.DiscordListener;
+import com.cykreet.arch.Arch;
+import com.cykreet.arch.listeners.DiscordGuildListener;
+import com.cykreet.arch.listeners.DiscordPrivateMessageListener;
+import com.cykreet.arch.listeners.DiscordReadyListener;
 import com.cykreet.arch.util.ConfigPath;
 import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
@@ -31,6 +34,7 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 public class DiscordManager extends Manager {
 	private Webhook webhook;
 	private JDA client;
+	private final ConfigManager configManager = Arch.getManager(ConfigManager.class);
 	private final EnumSet<CacheFlag> disabledCaches = EnumSet.of(
 		CacheFlag.MEMBER_OVERRIDES,
 		CacheFlag.ACTIVITY,
@@ -47,16 +51,19 @@ public class DiscordManager extends Manager {
 
 	public void login(@NotNull String token, @NotNull String activity) {
 		try {
-			this.client = JDABuilder.create(this.intents)
+			JDABuilder clientBuilder = JDABuilder.create(this.intents)
 				.disableCache(this.disabledCaches)
-				.addEventListeners(new DiscordListener())
+				.addEventListeners(new DiscordReadyListener())
+				.addEventListeners(new DiscordGuildListener())
 				// could get kinda problematic with larger guild sizes
 				.setMemberCachePolicy(MemberCachePolicy.ALL)
 				.setActivity(Activity.playing(activity))
 				.setContextEnabled(false)
-				.setToken(token)
-				.build();
+				.setToken(token);
 
+			if (this.configManager.getAuthenticationEnabled()) 
+				clientBuilder.addEventListeners(new DiscordPrivateMessageListener());
+			this.client = clientBuilder.build();
 			this.client.awaitReady();
 		} catch (LoginException exception) {
 			LoggerUtil.errorAndExit("Failed to login as Discord bot:\n" + exception.getStackTrace());

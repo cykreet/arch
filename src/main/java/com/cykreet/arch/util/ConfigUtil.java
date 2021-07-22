@@ -2,7 +2,6 @@ package com.cykreet.arch.util;
 
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.regex.Pattern;
 
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.ConfigManager;
@@ -17,18 +16,6 @@ import net.md_5.bungee.api.ChatColor;
 public class ConfigUtil {
 	private static ConfigManager configManager = Arch.getManager(ConfigManager.class);
 	private static FileConfiguration config = configManager.getConfig();
-
-	public static boolean ensureAuthenticationEnabled() {
-		ConfigPath notLinked = ConfigPath.AUTH_MESSAGE_NOT_LINKED;
-		if (!ConfigUtil.contains(notLinked)) {
-			String notEnabledMessage = String.format("\"%s\" config option not provided, disabling authentication...", notLinked.label);
-			LoggerUtil.warning(notEnabledMessage);
-			configManager.setAuthenticationEnabled(false);
-			return false;
-		}
-
-		return true;
-	}
 
 	public static boolean contains(@NotNull ConfigPath path) {
 		String configPath = path.label;
@@ -50,27 +37,34 @@ public class ConfigUtil {
 		boolean isOptional = configPath.endsWith("?");
 		if (configString == null) {
 			if (isOptional) return null;
-			String message = String.format("Required config path \"%s\" is invalid or missing.", configPath);
+			String message = String.format(Message.INTERNAL_REQUIRED_CONFIG_PATH.content, configPath);
 			LoggerUtil.errorAndExit(message);
 			return null;
 		}
 
 		String formatted = formatPlaceholders(configString, placeholders);
+		// todo: only translate on minecraft message
 		return ChatColor.translateAlternateColorCodes('&', formatted);
 	}
 
 	private static String formatPlaceholders(@NotNull String input, @Nullable Map<String, String> placeholders) {
+		StringBuilder stringBuilder = new StringBuilder(input);
 		if (placeholders != null) {
-			for (Entry<String, String> placeholder: placeholders.entrySet()) {
-				String placeholderKey = "{{" + placeholder.getKey() + "}}";
-				if (!input.contains(placeholderKey)) continue;
-				String placeholderValue = placeholder.getValue();
-				input = input.replaceAll(Pattern.quote(placeholderKey), placeholderValue);
+			for (Entry<String, String> entry : placeholders.entrySet()) {
+				String key = "{{" + entry.getKey() + "}}";
+				String value = entry.getValue();
+				int start = stringBuilder.indexOf(key, 0);
+				while (start > -1) {
+					int end = start + key.length();
+					int nextSearchStart = start + value.length();
+					stringBuilder.replace(start, end, value);
+					start = stringBuilder.indexOf(key, nextSearchStart);
+				}
 			}
 		}
 
-		if (!configManager.getPlaceholderAPISupport() || !PlaceholderAPI.containsPlaceholders(input)) return input;
-		// todo: get context player
-		return PlaceholderAPI.setPlaceholders(configManager.getPapiPlayer(), input);
+		String output = stringBuilder.toString();
+		if (!configManager.getPlaceholderAPISupport()) return output;
+		return PlaceholderAPI.setPlaceholders(configManager.getPapiPlayer(), output);
 	}
 }

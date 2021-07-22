@@ -1,4 +1,4 @@
-# Arch ${projectVersion}
+# Arch
 # important:
 # - options ending with "?" are completely optional.
 # - most options support colour codes (&)
@@ -25,21 +25,29 @@ authentication:
   required_role?:
   # time it takes for codes to expire (in minutes)
   code_expires: 5
-  message:
-    # message shown to player if they haven't linked their account.
-    # + {{bot}} - bot's tag (bot#1234) the user needs to direct-message their given code.
-    # + {{code}} - code player needs to link their account.
-    # + {{code.ttl}} - time, in minutes, it takes for a code to expire.
-    # + {{server}} - Discord server name.
-    not_linked?: "You haven't linked your Discord account yet!\nTo do so, DM the following code to &d{{bot}}&r.\n\n&d{{code}}\n&7(This code will expire in {{code.ttl}} minutes)"
-    # message shown to player if they're not in the channel specified earlier's Discord server.
-    # if empty, won't require the player to be in the server.
-    # + {{server}} - Discord server name.
-    not_in_server?:
-    # message shown to player if they don't have the required role specified earlier.
-    # + {{server}} - Discord server name.
-    # + {{role}} - required role name.
-    absent_role?:
+  # message shown to player if they haven't linked their account.
+  # + {{bot}} - bot's tag (bot#1234) the user needs to direct-message their given code.
+  # + {{code}} - code player needs to link their account.
+  # + {{code.ttl}} - time, in minutes, it takes for a code to expire.
+  # + {{server}} - Discord server name.
+  not_linked?: |-
+    You haven't linked your Discord account yet!
+    To do so, DM the following code to &d{{bot}}&r.
+
+    &d{{code}}
+    &7(This code will expire in {{code.ttl}} minutes)
+  # message shown to player if they're not in the channel specified earlier's Discord server.
+  # if empty, won't require the player to be in the server.
+  # + {{server}} - Discord server name.
+  not_in_server?: |-
+    This server is exclusive to members of the
+    &d{{server}} &rDiscord server.
+  # message shown to player if they don't have the required role specified earlier.
+  # + {{server}} - Discord server name.
+  # + {{role}} - required role name.
+  absent_role?: |-
+    Members of the &d{{server}} &rDiscord server are required
+    to have the &d{{role}} to join this server.
 
 message_format:
   chat?: "&3{{username}}#{{discrim}}&7: {{message}}"
@@ -47,4 +55,4 @@ message_format:
   leave?: "{{player}} left the server"
   death?: "☠ {{message}}"
 
-version:
+version: ${projectVersion}

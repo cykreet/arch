@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.CacheManager;
-import com.cykreet.arch.managers.ConfigManager;
 import com.cykreet.arch.managers.DiscordManager;
 import com.cykreet.arch.managers.PersistManager;
 import com.cykreet.arch.util.ConfigPath;
@@ -29,14 +28,11 @@ import net.dv8tion.jda.api.entities.SelfUser;
 public class PlayerPreLoginListener implements Listener {
 	private final Cache<UUID, String> codesCache = Arch.getManager(CacheManager.class).getCache();
 	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
-	private final ConfigManager configManager = Arch.getManager(ConfigManager.class);
 	private final PersistManager database = Arch.getManager(PersistManager.class);
 	private static final char[] characters = "0213546879".toCharArray();
 
 	@EventHandler(priority = EventPriority.LOW)
 	private void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-		if (!this.configManager.getAuthenticationEnabled()) return;
-
 		OfflinePlayer player = Bukkit.getOfflinePlayer(event.getUniqueId());
 		if (Bukkit.getIPBans().contains(event.getAddress().getHostAddress())) return;
 		if (Bukkit.getBannedPlayers().contains(player)) return;
@@ -46,8 +42,8 @@ public class PlayerPreLoginListener implements Listener {
 		if (!this.database.contains(playerUUID)) {
 			String code = this.codesCache.getIfPresent(playerUUID);
 			if (code == null) {
-				String codePrefix = player.getName().substring(0).toUpperCase();
-				code = codePrefix.concat("-" + generateRandomCode());
+				String codePrefix = player.getName().charAt(0) + "-";
+				code = codePrefix.toUpperCase().concat(generateRandomCode());
 				this.codesCache.put(playerUUID, code);
 			}
 
@@ -59,19 +55,19 @@ public class PlayerPreLoginListener implements Listener {
 			placeholders.put("code.ttl", Integer.toString(codeExpiry));
 			placeholders.put("server", guild.getName());
 
-			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_MESSAGE_NOT_LINKED, placeholders);
+			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_NOT_LINKED, placeholders);
 			event.disallow(Result.KICK_OTHER, kickMessage);
 			return;
 		}
 
-		if (!ConfigUtil.contains(ConfigPath.AUTH_MESSAGE_NOT_IN_SERVER)) return;
+		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_IN_SERVER)) return;
 		String discordId = this.database.getMemberId(playerUUID);
 		Member guildMember = guild.getMemberById(discordId);
 		if (guildMember == null) {
 			HashMap<String, String> placeholders = new HashMap<String, String>();
 			placeholders.put("server", guild.getName());
 
-			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_MESSAGE_NOT_IN_SERVER, placeholders);
+			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_NOT_IN_SERVER, placeholders);
 			event.disallow(Result.KICK_OTHER, kickMessage);
 			return;
 		}
@@ -83,7 +79,7 @@ public class PlayerPreLoginListener implements Listener {
 			placeholders.put("server", guild.getName());
 			placeholders.put("role", requiredRole.getName());
 
-			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_MESSAGE_ABSENT_ROLE, placeholders);
+			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_ABSENT_ROLE, placeholders);
 			event.disallow(Result.KICK_OTHER, kickMessage);
 			return;
 		}
