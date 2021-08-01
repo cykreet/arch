@@ -33,11 +33,11 @@ public class PlayerPreLoginListener implements Listener {
 
 	@EventHandler(priority = EventPriority.LOW)
 	private void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-		OfflinePlayer player = Bukkit.getOfflinePlayer(event.getUniqueId());
-		if (Bukkit.getIPBans().contains(event.getAddress().getHostAddress())) return;
-		if (Bukkit.getBannedPlayers().contains(player)) return;
-
 		UUID playerUUID = event.getUniqueId();
+		if (Bukkit.getIPBans().contains(event.getAddress().getHostAddress())) return;
+		OfflinePlayer player = Bukkit.getOfflinePlayer(playerUUID);
+		if (Bukkit.getBannedPlayers().contains(player)) return;
+		
 		Guild guild = this.discordManager.getGuild();
 		if (!this.database.contains(playerUUID)) {
 			String code = this.codesCache.getIfPresent(playerUUID);
@@ -55,7 +55,7 @@ public class PlayerPreLoginListener implements Listener {
 			placeholders.put("code.ttl", Integer.toString(codeExpiry));
 			placeholders.put("server", guild.getName());
 
-			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_NOT_LINKED, placeholders);
+			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_NOT_LINKED, placeholders, player);
 			event.disallow(Result.KICK_OTHER, kickMessage);
 			return;
 		}
@@ -67,7 +67,7 @@ public class PlayerPreLoginListener implements Listener {
 			HashMap<String, String> placeholders = new HashMap<String, String>();
 			placeholders.put("server", guild.getName());
 
-			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_NOT_IN_SERVER, placeholders);
+			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_NOT_IN_SERVER, placeholders, player);
 			event.disallow(Result.KICK_OTHER, kickMessage);
 			return;
 		}
@@ -79,7 +79,7 @@ public class PlayerPreLoginListener implements Listener {
 			placeholders.put("server", guild.getName());
 			placeholders.put("role", requiredRole.getName());
 
-			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_ABSENT_ROLE, placeholders);
+			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_ABSENT_ROLE, placeholders, player);
 			event.disallow(Result.KICK_OTHER, kickMessage);
 			return;
 		}

@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.ConfigManager;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,10 +29,18 @@ public class ConfigUtil {
 	}
 
 	public static String getString(@NotNull ConfigPath path) {
-		return getString(path, null);
+		return getString(path, null, null);
 	}
 
-	public static String getString(@NotNull ConfigPath path, @Nullable Map<String, String> placeholders) {
+	public static String getString(@NotNull ConfigPath path, @NotNull Map<String, String> placeholders) {
+		return getString(path, placeholders);
+	}
+
+	public static String getString(@NotNull ConfigPath path, @NotNull OfflinePlayer player) {
+		return getString(path, null, player);
+	}
+
+	public static String getString(@NotNull ConfigPath path, @Nullable Map<String, String> placeholders, @Nullable OfflinePlayer player) {
 		String configPath = path.label;
 		String configString = config.getString(configPath);
 		boolean isOptional = configPath.endsWith("?");
@@ -42,12 +51,12 @@ public class ConfigUtil {
 			return null;
 		}
 
-		String formatted = formatPlaceholders(configString, placeholders);
+		String formatted = formatPlaceholders(configString, placeholders, player);
 		// todo: only translate on minecraft message
 		return ChatColor.translateAlternateColorCodes('&', formatted);
 	}
 
-	private static String formatPlaceholders(@NotNull String input, @Nullable Map<String, String> placeholders) {
+	private static String formatPlaceholders(@NotNull String input, @Nullable Map<String, String> placeholders, @Nullable OfflinePlayer player) {
 		StringBuilder stringBuilder = new StringBuilder(input);
 		if (placeholders != null) {
 			for (Entry<String, String> entry : placeholders.entrySet()) {
@@ -64,7 +73,8 @@ public class ConfigUtil {
 		}
 
 		String output = stringBuilder.toString();
-		if (!configManager.getPlaceholderAPISupport()) return output;
-		return PlaceholderAPI.setPlaceholders(configManager.getPapiPlayer(), output);
+		if (!configManager.getPlaceholderAPISupport() || PlaceholderAPI.containsPlaceholders(output)) return output;
+		OfflinePlayer placeholderPlayer = player != null ? player : configManager.getPapiPlayer();
+		return PlaceholderAPI.setPlaceholders(placeholderPlayer, output);
 	}
 }

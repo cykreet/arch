@@ -11,6 +11,7 @@ import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.Message;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
@@ -29,7 +30,6 @@ public class DiscordGuildListener extends ListenerAdapter {
 		String userId = user.getId(); 
 		String selfId = this.discordManager.getSelfUser().getId();
 		if (event.isWebhookMessage() || userId.equals(selfId)) return;
-
 		
 		HashMap<String, String> placeholders = new HashMap<String, String>();
 		String userName = user.getName();
@@ -39,7 +39,9 @@ public class DiscordGuildListener extends ListenerAdapter {
 		placeholders.put("discrim", userDiscrim);
 		placeholders.put("message", content);
 		
-		String message = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_CHAT, placeholders);
+		// todo: database results should probably be cached somehow
+		OfflinePlayer player = Bukkit.getOfflinePlayer(this.database.getPlayerId(userId));
+		String message = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_CHAT, placeholders, player);
 		Bukkit.broadcastMessage(message);
 	}
 

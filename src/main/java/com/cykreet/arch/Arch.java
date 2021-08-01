@@ -69,7 +69,6 @@ public class Arch extends JavaPlugin {
 		}
 
 		// disable if the bot hasn't been invited to the configured guild
-		// by checking if we have access to the provided guild
 		if (this.discordManager.getGuild() == null) {
 			String selfId = this.discordManager.getSelfUser().getId();
 			String inviteLink = String.format("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=805325824", selfId);

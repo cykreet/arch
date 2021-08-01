@@ -27,7 +27,7 @@ public class PlayerGenericListener implements Listener {
 		String playerName = player.getName();
 		placeholders.put("player", playerName);
 
-		String quitMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_LEAVE, placeholders);
+		String quitMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_LEAVE, placeholders, player);
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
 			this.discordManager.sendMessage(quitMessage));
 	}
@@ -40,7 +40,7 @@ public class PlayerGenericListener implements Listener {
 		String playerName = player.getName();
 		placeholders.put("player", playerName);
 
-		String joinMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_JOIN, placeholders);
+		String joinMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_JOIN, placeholders, player);
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
 			this.discordManager.sendMessage(joinMessage));
 	}
@@ -54,7 +54,7 @@ public class PlayerGenericListener implements Listener {
 		placeholders.put("player", playerName);
 		placeholders.put("message", event.getDeathMessage());
 
-		String deathMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_DEATH, placeholders);
+		String deathMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_DEATH, placeholders, player);
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
 			this.discordManager.sendMessage(deathMessage));
 	}
