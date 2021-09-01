@@ -25,6 +25,10 @@ authentication:
   required_role?:
   # time it takes for codes to expire (in minutes)
   code_expires: 5
+  # message shown to player if arch hasn't finished initialising.
+  not_ready: |-
+    This server isn't ready to accept connections just yet!
+    Please try again in a few seconds.
   # message shown to player if they haven't linked their account.
   # + {{bot}} - bot's tag (bot#1234) the user needs to direct-message their given code.
   # + {{code}} - code player needs to link their account.
@@ -55,4 +59,4 @@ message_format:
   leave?: "{{player}} left the server"
   death?: "☠ {{message}}"
 
-version: ${projectVersion}
+config-version: ${projectVersion}

@@ -23,10 +23,10 @@ public class WebhookUtil {
 		os.flush();
 		os.close();
 
-		if (connection.getResponseCode() > 400) throw new Error(connection.getResponseMessage());
+		if (connection.getResponseCode() > 400) throw new Exception(connection.getResponseMessage());
 	}
 
-	public static String getPlayerAvatar(UUID playerUUId) {
+	public static String getPlayerAvatar(@NotNull UUID playerUUId) {
 		return String.format("https://crafatar.com/avatars/%s.png?size=120&overlay", playerUUId.toString());
 	}
 }

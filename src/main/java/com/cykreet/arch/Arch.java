@@ -33,24 +33,25 @@ public class Arch extends JavaPlugin {
 	public Arch() {
 		INSTANCE = this;
 	}
-
+	
 	@Override
 	public void onEnable() {
 		this.saveDefaultConfig();
+		this.registerListeners();
 		this.database = getManager(PersistManager.class);
+		this.cacheManager = getManager(CacheManager.class);
 		this.configManager = getManager(ConfigManager.class);
-		this.configManager.setup(this.getConfig());
 		this.discordManager = getManager(DiscordManager.class);
+		this.configManager.load(this.getConfig());
 		String configPlayer = ConfigUtil.getString(ConfigPath.DEFAULT_PLAYER);
 		if (configPlayer != null) {
 			UUID defaultPlayer = UUID.fromString(configPlayer);
 			this.configManager.setPapiPlayer(Bukkit.getOfflinePlayer(defaultPlayer));
 		}
-
+		
 		int codeExpiry = ConfigUtil.getInt(ConfigPath.AUTH_CODE_EXPIRE);
-		this.cacheManager = getManager(CacheManager.class);
 		this.cacheManager.createCache(codeExpiry);
-		this.database.connect(this.getDataFolder(), "linked-users.db");
+		this.database.connect(this.getDataFolder(), "linked-users.sqlite");
 		
 		String botToken = ConfigUtil.getString(ConfigPath.BOT_TOKEN);
 		// handled by config util
@@ -58,21 +59,11 @@ public class Arch extends JavaPlugin {
 		String activity = ConfigUtil.getString(ConfigPath.BOT_STATUS);
 		this.discordManager.login(botToken, activity);
 
-		this.registerListener(new PlayerChatListener());
-		this.registerListener(new PlayerGenericListener());
-		ConfigPath notLinked = ConfigPath.AUTH_NOT_LINKED;
-		if (ConfigUtil.contains(notLinked)) this.registerListener(new PlayerPreLoginListener());
-		else {
-			this.configManager.setAuthenticationEnabled(false);
-			String authNotEnabledMessage = String.format(Message.INTERNAL_AUTHENTICATION_DISABLED.content, notLinked.label);
-			LoggerUtil.warning(authNotEnabledMessage);
-		}
-
 		// disable if the bot hasn't been invited to the configured guild
 		if (this.discordManager.getGuild() == null) {
 			String selfId = this.discordManager.getSelfUser().getId();
 			String inviteLink = String.format("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=805325824", selfId);
-			String message = String.format(Message.INTERNAL_BOT_NOT_IN_SERVER.content, inviteLink);
+			String message = ConfigUtil.formatMessage(Message.INTERNAL_BOT_NOT_IN_SERVER, inviteLink);
 			LoggerUtil.errorAndExit(message);
 		}
 	}
@@ -86,14 +77,8 @@ public class Arch extends JavaPlugin {
 	}
 	
 	public void reloadPlugin() {
-		// to be used with future reload command
-		// todo: doesn't reload listeners and database and shit
 		this.reloadConfig();
-		this.configManager.reload();
-	}
-
-	private void registerListener(Listener listener) {
-		this.getServer().getPluginManager().registerEvents(listener, this);
+		this.onEnable();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -110,8 +95,23 @@ public class Arch extends JavaPlugin {
 			return null;
 		}
 	}
-
+	
+	public static boolean getReady() {
+		// if the guild isn't null, we *should* be ready to handle things
+		return Arch.getManager(DiscordManager.class).getGuild() != null;
+	}
+	
 	public static Arch getInstance() {
 		return Arch.INSTANCE;
+	}
+
+	private void registerListeners() {
+		this.registerListener(new PlayerPreLoginListener());
+		this.registerListener(new PlayerGenericListener());
+		this.registerListener(new PlayerChatListener());
+	}
+
+	private void registerListener(Listener listener) {
+		this.getServer().getPluginManager().registerEvents(listener, this);
 	}
 }

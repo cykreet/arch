@@ -15,8 +15,8 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 
 public class ConfigUtil {
-	private static ConfigManager configManager = Arch.getManager(ConfigManager.class);
-	private static FileConfiguration config = configManager.getConfig();
+	private static final ConfigManager configManager = Arch.getManager(ConfigManager.class);
+	private static final FileConfiguration config = configManager.getConfig();
 
 	public static boolean contains(@NotNull ConfigPath path) {
 		String configPath = path.label;
@@ -29,24 +29,24 @@ public class ConfigUtil {
 	}
 
 	public static String getString(@NotNull ConfigPath path) {
-		return getString(path, null, null);
+		return ConfigUtil.getString(path, null, null);
 	}
 
 	public static String getString(@NotNull ConfigPath path, @NotNull Map<String, String> placeholders) {
-		return getString(path, placeholders);
+		return ConfigUtil.getString(path, placeholders);
 	}
 
 	public static String getString(@NotNull ConfigPath path, @NotNull OfflinePlayer player) {
-		return getString(path, null, player);
+		return ConfigUtil.getString(path, null, player);
 	}
 
 	public static String getString(@NotNull ConfigPath path, @Nullable Map<String, String> placeholders, @Nullable OfflinePlayer player) {
 		String configPath = path.label;
-		String configString = config.getString(configPath);
-		boolean isOptional = configPath.endsWith("?");
+		String configString = config.getString(configPath, null);
 		if (configString == null) {
+			boolean isOptional = configPath.endsWith("?");
 			if (isOptional) return null;
-			String message = String.format(Message.INTERNAL_REQUIRED_CONFIG_PATH.content, configPath);
+			String message = formatMessage(Message.INTERNAL_REQUIRED_CONFIG_PATH, configPath);
 			LoggerUtil.errorAndExit(message);
 			return null;
 		}
@@ -54,6 +54,10 @@ public class ConfigUtil {
 		String formatted = formatPlaceholders(configString, placeholders, player);
 		// todo: only translate on minecraft message
 		return ChatColor.translateAlternateColorCodes('&', formatted);
+	}
+
+	public static String formatMessage(Message message, Object ...args) {
+		return String.format(message.content, args);
 	}
 
 	private static String formatPlaceholders(@NotNull String input, @Nullable Map<String, String> placeholders, @Nullable OfflinePlayer player) {

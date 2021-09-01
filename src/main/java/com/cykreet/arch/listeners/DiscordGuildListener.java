@@ -1,6 +1,7 @@
 package com.cykreet.arch.listeners;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.DiscordManager;
@@ -12,10 +13,12 @@ import com.cykreet.arch.util.Message;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -39,15 +42,24 @@ public class DiscordGuildListener extends ListenerAdapter {
 		placeholders.put("discrim", userDiscrim);
 		placeholders.put("message", content);
 		
-		// todo: database results should probably be cached somehow
 		OfflinePlayer player = Bukkit.getOfflinePlayer(this.database.getPlayerId(userId));
 		String message = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_CHAT, placeholders, player);
 		Bukkit.broadcastMessage(message);
 	}
 
 	@Override
+	public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
+		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_IN_SERVER)) return;
+		String userId = event.getUser().getId();
+		UUID playerUUID = this.database.getPlayerId(userId);
+		if (playerUUID == null) return;
+		Player player = Bukkit.getPlayer(playerUUID);
+		if (player == null || !player.isOnline()) return;
+		player.kickPlayer("You are no longer in the required Discord server.");
+	}
+
+	@Override
 	public void onGuildBan(GuildBanEvent event) {
-		// todo: cba to find the kick event
 		String userId = event.getUser().getId();
 		if (!this.database.contains(userId)) return;
 		this.database.unlinkPlayer(userId);

@@ -17,6 +17,6 @@ public class CacheManager extends Manager {
 	}
 
 	public Cache<UUID, String> getCache() {
-		return cache;
+		return this.cache;
 	}
 }

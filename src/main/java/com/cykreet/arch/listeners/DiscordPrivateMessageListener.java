@@ -7,6 +7,8 @@ import java.util.UUID;
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.CacheManager;
 import com.cykreet.arch.managers.PersistManager;
+import com.cykreet.arch.util.ConfigPath;
+import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.Message;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -29,6 +31,7 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
 
 	@Override
 	public void onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
+		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_LINKED)) return;
 		User user = event.getAuthor();
 		String userId = user.getId();
 		if (user.isBot()) return;
@@ -55,7 +58,7 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
 			this.codesCache.invalidate(playerUUID);
 			OfflinePlayer player = Bukkit.getOfflinePlayer(playerUUID);
 			this.database.insert(playerUUID, userId);
-			String message = String.format(Message.DISCORD_LINKED_ACCOUNT.content, player.getName());
+			String message = ConfigUtil.formatMessage(Message.DISCORD_LINKED_ACCOUNT, player.getName());
 			channel.sendMessage(message).queue();
 			return;
 		}
@@ -64,12 +67,12 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
 		String playerName = player.getName();
 		if (messageContent.equalsIgnoreCase("unlink")) {
 			this.database.unlinkPlayer(playerId);
-			String message = String.format(Message.DISCORD_UNLINKED_ACCOUNT.content, playerName);
+			String message = ConfigUtil.formatMessage(Message.DISCORD_UNLINKED_ACCOUNT, playerName);
 			channel.sendMessage(message).queue();
 			return;
 		}
 
-		String message = String.format(Message.DISCORD_ALREADY_LINKED_ACCOUNT.content, playerName);
+		String message = ConfigUtil.formatMessage(Message.DISCORD_ALREADY_LINKED_ACCOUNT, playerName);
 		channel.sendMessage(message).queue();
 	}
 }

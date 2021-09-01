@@ -24,7 +24,7 @@ public class DiscordReadyListener extends ListenerAdapter {
 
 		String configChannelTopic = ConfigUtil.getString(ConfigPath.CHANNEL_TOPIC);
 		channel.getManager().setTopic(configChannelTopic).queue();
-		String message = String.format(Message.DISCORD_BOT_READY.content, bot.getAsTag());
+		String message = ConfigUtil.formatMessage(Message.DISCORD_BOT_READY, bot.getAsTag());
 		LoggerUtil.info(message);
 	}
 }

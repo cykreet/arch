@@ -1,23 +1,20 @@
 package com.cykreet.arch.managers;
 
+import javax.annotation.Nullable;
+
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
 public class ConfigManager extends Manager {
 	private static FileConfiguration config;
 	private static boolean papiSupport;
 	private static OfflinePlayer papiPlayer;
-	private static boolean authenticationEnabled;
 	
-	public void setup(FileConfiguration file) {
-		config = file;
-		this.reload();
-	}
-
-	public void reload() {
-		authenticationEnabled = true;
+	public void load(FileConfiguration file) {
+		ConfigManager.config = file;
 		Plugin placeholderAPIPlugin = Bukkit.getPluginManager().getPlugin("PlaceholderAPI");
 		papiSupport = placeholderAPIPlugin != null && placeholderAPIPlugin.isEnabled();
 	}
@@ -30,19 +27,12 @@ public class ConfigManager extends Manager {
 		return papiSupport;
 	}
 
-	public void setPapiPlayer(OfflinePlayer player) {
+	public void setPapiPlayer(@NotNull OfflinePlayer player) {
 		papiPlayer = player;
 	}
 
+	@Nullable
 	public OfflinePlayer getPapiPlayer() {
 		return papiPlayer;
-	}
-
-	public boolean getAuthenticationEnabled() {
-		return authenticationEnabled;
-	}
-
-	public void setAuthenticationEnabled(boolean enable) {
-		authenticationEnabled = enable;
 	}
 }

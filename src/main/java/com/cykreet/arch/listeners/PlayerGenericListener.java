@@ -18,6 +18,19 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 public class PlayerGenericListener implements Listener {
 	private DiscordManager discordManager = Arch.getManager(DiscordManager.class);
+	
+	@EventHandler(priority = EventPriority.MONITOR)
+	private void onPlayerJoin(PlayerJoinEvent event) {
+		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_JOIN)) return;
+		HashMap<String, String> placeholders = new HashMap<String, String>();
+		Player player = event.getPlayer();
+		String playerName = player.getName();
+		placeholders.put("player", playerName);
+
+		String joinMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_JOIN, placeholders, player);
+		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
+			this.discordManager.sendMessage(joinMessage));
+	}
 
 	@EventHandler(priority = EventPriority.MONITOR)
 	private void onPlayerQuit(PlayerQuitEvent event) {
@@ -30,19 +43,6 @@ public class PlayerGenericListener implements Listener {
 		String quitMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_LEAVE, placeholders, player);
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
 			this.discordManager.sendMessage(quitMessage));
-	}
-
-	@EventHandler(priority = EventPriority.MONITOR)
-	private void onPlayerJoin(PlayerJoinEvent event) {
-		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_JOIN)) return;
-		HashMap<String, String> placeholders = new HashMap<String, String>();
-		Player player = event.getPlayer();
-		String playerName = player.getName();
-		placeholders.put("player", playerName);
-
-		String joinMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_JOIN, placeholders, player);
-		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
-			this.discordManager.sendMessage(joinMessage));
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR)

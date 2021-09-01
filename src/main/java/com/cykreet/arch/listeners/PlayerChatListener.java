@@ -20,8 +20,8 @@ public class PlayerChatListener implements Listener {
 
 	@EventHandler(priority = EventPriority.MONITOR)
 	private void onPlayerChat(AsyncPlayerChatEvent event) {
-		if (event.isCancelled()) return;
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_CHAT)) return;
+		if (event.isCancelled()) return;
 		HashMap<String, String> placeholders = new HashMap<String, String>();
 		Player player = event.getPlayer();
 		String playerName = player.getName();
@@ -31,6 +31,6 @@ public class PlayerChatListener implements Listener {
 		// todo: resolve user mentions
 		String message = event.getMessage();
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> 
-			this.discordManager.sendMessage(playerName, playerAvatar, message));
+			this.discordManager.sendWebhookMessage(playerName, playerAvatar, message));
 	}
 }

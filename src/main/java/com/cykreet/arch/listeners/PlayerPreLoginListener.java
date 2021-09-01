@@ -26,25 +26,32 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.SelfUser;
 
 public class PlayerPreLoginListener implements Listener {
-	private final Cache<UUID, String> codesCache = Arch.getManager(CacheManager.class).getCache();
 	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
+	private final CacheManager cacheManager = Arch.getManager(CacheManager.class);
 	private final PersistManager database = Arch.getManager(PersistManager.class);
 	private static final char[] characters = "0213546879".toCharArray();
 
 	@EventHandler(priority = EventPriority.LOW)
 	private void onPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_LINKED)) return;
 		UUID playerUUID = event.getUniqueId();
 		if (Bukkit.getIPBans().contains(event.getAddress().getHostAddress())) return;
 		OfflinePlayer player = Bukkit.getOfflinePlayer(playerUUID);
 		if (Bukkit.getBannedPlayers().contains(player)) return;
-		
+		if (Arch.getReady() != true) {
+			String kickMessage = ConfigUtil.getString(ConfigPath.AUTH_NOT_READY);
+			event.disallow(Result.KICK_OTHER, kickMessage);
+			return;
+		}
+
 		Guild guild = this.discordManager.getGuild();
 		if (!this.database.contains(playerUUID)) {
-			String code = this.codesCache.getIfPresent(playerUUID);
+			Cache<UUID, String> codesCache = this.cacheManager.getCache();
+			String code = codesCache.getIfPresent(playerUUID);
 			if (code == null) {
 				String codePrefix = player.getName().charAt(0) + "-";
 				code = codePrefix.toUpperCase().concat(generateRandomCode());
-				this.codesCache.put(playerUUID, code);
+				codesCache.put(playerUUID, code);
 			}
 
 			HashMap<String, String> placeholders = new HashMap<String, String>();

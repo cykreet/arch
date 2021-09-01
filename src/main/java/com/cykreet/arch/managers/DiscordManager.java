@@ -6,7 +6,6 @@ import java.util.List;
 
 import javax.security.auth.login.LoginException;
 
-import com.cykreet.arch.Arch;
 import com.cykreet.arch.listeners.DiscordGuildListener;
 import com.cykreet.arch.listeners.DiscordPrivateMessageListener;
 import com.cykreet.arch.listeners.DiscordReadyListener;
@@ -34,7 +33,6 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 public class DiscordManager extends Manager {
 	private Webhook webhook;
 	private JDA client;
-	private final ConfigManager configManager = Arch.getManager(ConfigManager.class);
 	private final EnumSet<CacheFlag> disabledCaches = EnumSet.of(
 		CacheFlag.MEMBER_OVERRIDES,
 		CacheFlag.ACTIVITY,
@@ -55,14 +53,13 @@ public class DiscordManager extends Manager {
 				.disableCache(this.disabledCaches)
 				.addEventListeners(new DiscordReadyListener())
 				.addEventListeners(new DiscordGuildListener())
+				.addEventListeners(new DiscordPrivateMessageListener())
 				// could get kinda problematic with larger guild sizes
 				.setMemberCachePolicy(MemberCachePolicy.ALL)
 				.setActivity(Activity.playing(activity))
 				.setContextEnabled(false)
 				.setToken(token);
 
-			if (this.configManager.getAuthenticationEnabled()) 
-				clientBuilder.addEventListeners(new DiscordPrivateMessageListener());
 			this.client = clientBuilder.build();
 			this.client.awaitReady();
 		} catch (LoginException exception) {
@@ -91,16 +88,16 @@ public class DiscordManager extends Manager {
 		else this.webhook = channel.createWebhook(name).submit().join();
 	}
 
-	public void sendMessage(@NotNull String name, @NotNull String avatar, @NotNull String message) {
+	public void sendWebhookMessage(@NotNull String name, @NotNull String avatar, @NotNull String message) {
 		if (this.webhook == null) throw new Error("Managable webhook has not been created.");
 		try {
-			URL webhookUrl = new URL(this.webhook.getUrl());
 			String allowedMentions = "{\"parse\": [\"users\"]}";
 			String body = String.format(
-				"{\"username\": \"%s\", \"avatar_url\": \"%s\", \"content\": \"%s\", \"parse\": %s}",
-				name, avatar, message, allowedMentions
-			);
-
+					"{\"username\": \"%s\", \"avatar_url\": \"%s\", \"content\": \"%s\", \"parse\": %s}",
+					name, avatar, message, allowedMentions
+				);
+				
+			URL webhookUrl = new URL(this.webhook.getUrl());
 			WebhookUtil.post(webhookUrl, body);
 		} catch (Exception exception) {
 			LoggerUtil.error("Failed to execute webhook:\n" + exception.getStackTrace());
@@ -124,7 +121,9 @@ public class DiscordManager extends Manager {
 	}
 
 	public Role getRequiredRole() {
+		if (ConfigUtil.contains(ConfigPath.AUTH_NOT_LINKED) != true) return null;
 		String configRoleId = ConfigUtil.getString(ConfigPath.AUTH_REQUIRED_ROLE);
+		if (configRoleId == null) return null;
 		Role role = this.client.getRoleById(configRoleId);
 		return role;
 	}
