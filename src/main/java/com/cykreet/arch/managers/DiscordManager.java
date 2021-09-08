@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.security.auth.login.LoginException;
 
+import com.cykreet.arch.Arch;
 import com.cykreet.arch.listeners.DiscordGuildListener;
 import com.cykreet.arch.listeners.DiscordPrivateMessageListener;
 import com.cykreet.arch.listeners.DiscordReadyListener;
@@ -76,11 +77,12 @@ public class DiscordManager extends Manager {
 
 	public void ensureWebhook(@NotNull TextChannel channel) {
 		if (this.webhook != null) return;
-		String name = "Arch - " + this.client.getSelfUser().getId();
+		SelfUser selfUser = this.client.getSelfUser();
+		String name = Arch.getInstance().getName();
 		RestAction<List<Webhook>> getWebhooks = channel.retrieveWebhooks();
 		Webhook targetWebhook = getWebhooks.submit().join()
 			.stream()
-			.filter((webhook) -> webhook.getName().equalsIgnoreCase(name))
+			.filter((webhook) -> webhook.getOwnerAsUser().getId().equals(selfUser.getId()))
 			.findFirst()
 			.orElse(null);
 
