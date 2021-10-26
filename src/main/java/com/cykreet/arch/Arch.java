@@ -8,11 +8,11 @@ import java.util.UUID;
 import com.cykreet.arch.listeners.PlayerChatListener;
 import com.cykreet.arch.listeners.PlayerGenericListener;
 import com.cykreet.arch.listeners.PlayerPreLoginListener;
-import com.cykreet.arch.managers.CacheManager;
+import com.cykreet.arch.managers.CodesManager;
 import com.cykreet.arch.managers.ConfigManager;
 import com.cykreet.arch.managers.DiscordManager;
 import com.cykreet.arch.managers.Manager;
-import com.cykreet.arch.managers.PersistManager;
+import com.cykreet.arch.managers.DatabaseManager;
 import com.cykreet.arch.util.ConfigPath;
 import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
@@ -26,8 +26,8 @@ public class Arch extends JavaPlugin {
 	private static Map<Class<Manager>, Manager> managers = new HashMap<>();
 	private DiscordManager discordManager;
 	private ConfigManager configManager;
-	private CacheManager cacheManager;
-	private PersistManager database;
+	private CodesManager codesManager;
+	private DatabaseManager database;
 	private static Arch INSTANCE;
 
 	public Arch() {
@@ -38,8 +38,8 @@ public class Arch extends JavaPlugin {
 	public void onEnable() {
 		this.saveDefaultConfig();
 		this.registerListeners();
-		this.database = getManager(PersistManager.class);
-		this.cacheManager = getManager(CacheManager.class);
+		this.database = getManager(DatabaseManager.class);
+		this.codesManager = getManager(CodesManager.class);
 		this.configManager = getManager(ConfigManager.class);
 		this.discordManager = getManager(DiscordManager.class);
 		this.configManager.load(this.getConfig());
@@ -50,9 +50,9 @@ public class Arch extends JavaPlugin {
 		}
 		
 		int codeExpiry = ConfigUtil.getInt(ConfigPath.AUTH_CODE_EXPIRE);
-		this.cacheManager.createCache(codeExpiry);
+		this.codesManager.createCache(codeExpiry);
 		this.database.connect(this.getDataFolder(), "linked-users.sqlite");
-		
+	
 		String botToken = ConfigUtil.getString(ConfigPath.BOT_TOKEN);
 		// handled by config util
 		if (botToken == null) return;
@@ -61,8 +61,7 @@ public class Arch extends JavaPlugin {
 
 		// disable if the bot hasn't been invited to the configured guild
 		if (this.discordManager.getGuild() == null) {
-			String selfId = this.discordManager.getSelfUser().getId();
-			String inviteLink = String.format("https://discord.com/oauth2/authorize?client_id=%s&scope=bot&permissions=805325824", selfId);
+			String inviteLink = this.discordManager.getBotInvite();
 			String message = ConfigUtil.formatMessage(Message.INTERNAL_BOT_NOT_IN_SERVER, inviteLink);
 			LoggerUtil.errorAndExit(message);
 		}
@@ -70,13 +69,15 @@ public class Arch extends JavaPlugin {
 	
 	@Override
 	public void onDisable() {
-		this.database.close();
 		this.discordManager.logout();
-		if (this.cacheManager != null) this.cacheManager.getCache().invalidateAll();
 		Bukkit.getScheduler().cancelTasks(this);
+		if (this.codesManager != null) this.codesManager.getCache().invalidateAll();
+		this.database.close();
 	}
 	
 	public void reloadPlugin() {
+		this.discordManager.logout();
+		this.database.close();
 		this.reloadConfig();
 		this.onEnable();
 	}

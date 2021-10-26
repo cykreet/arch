@@ -5,41 +5,43 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import com.cykreet.arch.Arch;
-import com.cykreet.arch.managers.CacheManager;
-import com.cykreet.arch.managers.PersistManager;
+import com.cykreet.arch.managers.CodesManager;
+import com.cykreet.arch.managers.DatabaseManager;
 import com.cykreet.arch.util.ConfigPath;
 import com.cykreet.arch.util.ConfigUtil;
+import com.cykreet.arch.util.DatabaseUtil;
 import com.cykreet.arch.util.Message;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.javacord.api.entity.channel.PrivateChannel;
+import org.javacord.api.entity.message.MessageAuthor;
+import org.javacord.api.event.message.MessageCreateEvent;
+import org.javacord.api.listener.message.MessageCreateListener;
 
-import net.dv8tion.jda.api.entities.PrivateChannel;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-
-public class DiscordPrivateMessageListener extends ListenerAdapter {
-	private final Cache<UUID, String> codesCache = Arch.getManager(CacheManager.class).getCache();
-	private final PersistManager database = Arch.getManager(PersistManager.class);
+public class DiscordPrivateMessageListener implements MessageCreateListener {
+	private final Cache<UUID, String> codesCache = Arch.getManager(CodesManager.class).getCache();
+	private final DatabaseManager database = Arch.getManager(DatabaseManager.class);
 	private final Cache<String, Boolean> cooldownCache = Caffeine.newBuilder()
 		.expireAfterWrite(Duration.ofSeconds(3))
 		.maximumSize(20)
 		.build();
 
 	@Override
-	public void onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
+	public void onMessageCreate(MessageCreateEvent event) {
 		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_LINKED)) return;
-		User user = event.getAuthor();
-		String userId = user.getId();
-		if (user.isBot()) return;
+		if (!event.isPrivateMessage()) return;
+		
+		PrivateChannel channel = event.getPrivateChannel().get();
+		MessageAuthor user = event.getMessageAuthor();
+		String userId = user.getIdAsString();
+		if (user.isBotUser()) return;
 		if (this.cooldownCache.getIfPresent(userId) != null) return;
 		this.cooldownCache.put(userId, true);
 
-		PrivateChannel channel = event.getChannel();
-		String messageContent = event.getMessage().getContentStripped();
+		String messageContent = event.getReadableMessageContent();
 		UUID playerId = this.database.getPlayerId(userId);
 		if (playerId == null) {
 			// get the user's minecraft player uuid through the cache by
@@ -50,7 +52,7 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
 				.orElse(null);
 
 			if (cachedPlayerEntry == null) {
-				channel.sendMessage(Message.DISCORD_INVALID_CODE.content).queue();
+				channel.sendMessage(Message.DISCORD_INVALID_CODE.content);
 				return;
 			}
 
@@ -59,20 +61,20 @@ public class DiscordPrivateMessageListener extends ListenerAdapter {
 			OfflinePlayer player = Bukkit.getOfflinePlayer(playerUUID);
 			this.database.insert(playerUUID, userId);
 			String message = ConfigUtil.formatMessage(Message.DISCORD_LINKED_ACCOUNT, player.getName());
-			channel.sendMessage(message).queue();
+			channel.sendMessage(message);
 			return;
 		}
 
 		OfflinePlayer player = Bukkit.getOfflinePlayer(playerId);
 		String playerName = player.getName();
 		if (messageContent.equalsIgnoreCase("unlink")) {
-			this.database.unlinkPlayer(playerId);
+			DatabaseUtil.unlinkPlayer(playerId);
 			String message = ConfigUtil.formatMessage(Message.DISCORD_UNLINKED_ACCOUNT, playerName);
-			channel.sendMessage(message).queue();
+			channel.sendMessage(message);
 			return;
 		}
 
 		String message = ConfigUtil.formatMessage(Message.DISCORD_ALREADY_LINKED_ACCOUNT, playerName);
-		channel.sendMessage(message).queue();
+		channel.sendMessage(message);
 	}
 }

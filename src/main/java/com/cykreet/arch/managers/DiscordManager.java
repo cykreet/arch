@@ -1,10 +1,7 @@
 package com.cykreet.arch.managers;
 
 import java.net.URL;
-import java.util.EnumSet;
 import java.util.List;
-
-import javax.security.auth.login.LoginException;
 
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.listeners.DiscordGuildListener;
@@ -13,124 +10,130 @@ import com.cykreet.arch.listeners.DiscordReadyListener;
 import com.cykreet.arch.util.ConfigPath;
 import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
-import com.cykreet.arch.util.WebhookUtil;
+import com.cykreet.arch.util.Message;
 
+import org.javacord.api.DiscordApi;
+import org.javacord.api.DiscordApiBuilder;
+import org.javacord.api.entity.channel.ServerChannel;
+import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.intent.Intent;
+import org.javacord.api.entity.message.WebhookMessageBuilder;
+import org.javacord.api.entity.message.mention.AllowedMentions;
+import org.javacord.api.entity.message.mention.AllowedMentionsBuilder;
+import org.javacord.api.entity.permission.PermissionType;
+import org.javacord.api.entity.permission.Permissions;
+import org.javacord.api.entity.permission.PermissionsBuilder;
+import org.javacord.api.entity.permission.Role;
+import org.javacord.api.entity.server.Server;
+import org.javacord.api.entity.user.User;
+import org.javacord.api.entity.webhook.IncomingWebhook;
+import org.javacord.api.entity.webhook.Webhook;
 import org.jetbrains.annotations.NotNull;
-
-import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.GuildChannel;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.SelfUser;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.entities.Webhook;
-import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.RestAction;
-import net.dv8tion.jda.api.utils.MemberCachePolicy;
-import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 public class DiscordManager extends Manager {
 	private Webhook webhook;
-	private JDA client;
-	private final EnumSet<CacheFlag> disabledCaches = EnumSet.of(
-		CacheFlag.MEMBER_OVERRIDES,
-		CacheFlag.ACTIVITY,
-		CacheFlag.EMOTE,
-		CacheFlag.CLIENT_STATUS,
-		CacheFlag.VOICE_STATE,
-		CacheFlag.ONLINE_STATUS
-	);
-	private final EnumSet<GatewayIntent> intents = EnumSet.of(
-		GatewayIntent.GUILD_MEMBERS,
-		GatewayIntent.GUILD_MESSAGES,
-		GatewayIntent.DIRECT_MESSAGES
-	);
+	private DiscordApi client;
+	private final Intent[] intents = {
+		Intent.GUILD_MEMBERS,
+		Intent.DIRECT_MESSAGES,
+		Intent.GUILD_WEBHOOKS,
+		Intent.GUILD_MESSAGES
+	};
 
 	public void login(@NotNull String token, @NotNull String activity) {
-		try {
-			JDABuilder clientBuilder = JDABuilder.create(this.intents)
-				.disableCache(this.disabledCaches)
-				.addEventListeners(new DiscordReadyListener())
-				.addEventListeners(new DiscordGuildListener())
-				.addEventListeners(new DiscordPrivateMessageListener())
-				// could get kinda problematic with larger guild sizes
-				.setMemberCachePolicy(MemberCachePolicy.ALL)
-				.setActivity(Activity.playing(activity))
-				.setContextEnabled(false)
-				.setToken(token);
+		DiscordGuildListener discordGuildListener = new DiscordGuildListener();
+		this.client = new DiscordApiBuilder()
+			.addServerBecomesAvailableListener(new DiscordReadyListener())
+			.addMessageCreateListener(new DiscordPrivateMessageListener())
+			.addMessageCreateListener(discordGuildListener)
+			.addServerMemberBanListener(discordGuildListener)
+			.addServerMemberLeaveListener(discordGuildListener)
+			.setIntents(intents)
+			.setToken(token)
+			.login()
+			.join();
 
-			this.client = clientBuilder.build();
-			this.client.awaitReady();
-		} catch (LoginException exception) {
-			LoggerUtil.errorAndExit("Failed to login as Discord bot:\n" + exception.getStackTrace());
-		} catch (Exception exception) {
-			LoggerUtil.errorAndExit("An unknown error occurred whilst trying to start the Discord bot: \n" + exception.getStackTrace());
-		}
+		this.client.setMessageCacheSize(3, 1);
+		this.client.updateActivity(activity);
 	}
 
 	public void logout() {
 		if (this.client == null) return;
-		this.client.shutdown();
+		this.client.disconnect();
+		this.client = null;
 	}
 
-	public void ensureWebhook(@NotNull TextChannel channel) {
+	public void ensureWebhook(@NotNull ServerTextChannel channel) {
 		if (this.webhook != null) return;
-		SelfUser selfUser = this.client.getSelfUser();
+		User selfUser = this.client.getYourself();
 		String name = Arch.getInstance().getName();
-		RestAction<List<Webhook>> getWebhooks = channel.retrieveWebhooks();
-		Webhook targetWebhook = getWebhooks.submit().join()
-			.stream()
-			.filter((webhook) -> webhook.getOwnerAsUser().getId().equals(selfUser.getId()))
+
+		channel.getWebhooks().thenAccept((List<Webhook> webhooks) -> {
+			Webhook configWebhook = webhooks.stream().filter((Webhook webhook) -> (
+				webhook.getCreator().orElse(null).getIdAsString().equals(selfUser.getIdAsString())
+			))
 			.findFirst()
 			.orElse(null);
 
-		if (targetWebhook != null) this.webhook = targetWebhook;
-		else this.webhook = channel.createWebhook(name).submit().join();
+			if (configWebhook != null) this.webhook = configWebhook;
+			else this.webhook = channel.createWebhookBuilder().setName(name).create().join();
+		});
 	}
 
-	public void sendWebhookMessage(@NotNull String name, @NotNull String avatar, @NotNull String message) {
-		if (this.webhook == null) throw new Error("Managable webhook has not been created.");
-		try {
-			String allowedMentions = "{\"parse\": [\"users\"]}";
-			String body = String.format(
-					"{\"username\": \"%s\", \"avatar_url\": \"%s\", \"content\": \"%s\", \"parse\": %s}",
-					name, avatar, message, allowedMentions
-				);
-				
-			URL webhookUrl = new URL(this.webhook.getUrl());
-			WebhookUtil.post(webhookUrl, body);
-		} catch (Exception exception) {
-			LoggerUtil.error("Failed to execute webhook:\n" + exception.getStackTrace());
+	public void sendWebhookMessage(@NotNull String name, @NotNull URL avatar, @NotNull String message) {
+		if (this.webhook == null) {
+			LoggerUtil.error(Message.INTERNAL_WEBHOOK_NOT_CREATED.content);
+			return;
 		}
+		
+		IncomingWebhook incomingWebhook = this.webhook.asIncomingWebhook().get();
+		AllowedMentions allowedMentions = new AllowedMentionsBuilder().setMentionUsers(true).build();
+		new WebhookMessageBuilder()
+			.setDisplayName(name)
+			.setDisplayAvatar(avatar)
+			.setAllowedMentions(allowedMentions)
+			.setContent(message)
+			.send(incomingWebhook);
 	}
 
 	public void sendMessage(@NotNull String message) {
-		TextChannel channel = (TextChannel) this.getChannel();
-		channel.sendMessage(message).queue();
+		ServerTextChannel channel =  this.getChannel();
+		channel.sendMessage(message);
 	}
 
-	public GuildChannel getChannel() {
+	public ServerTextChannel getChannel() {
 		String configChannelId = ConfigUtil.getString(ConfigPath.CHANNEL_ID);
-		return this.client.getGuildChannelById(configChannelId);
+		return this.client.getServerTextChannelById(configChannelId).get();
 	}
 
-	public Guild getGuild() {
-		GuildChannel channel = this.getChannel();
+	public Server getGuild() {
+		ServerChannel channel = this.getChannel();
 		if (channel == null) return null;
-		return channel.getGuild();
+		return channel.getServer();
 	}
 
 	public Role getRequiredRole() {
 		if (ConfigUtil.contains(ConfigPath.AUTH_NOT_LINKED) != true) return null;
 		String configRoleId = ConfigUtil.getString(ConfigPath.AUTH_REQUIRED_ROLE);
 		if (configRoleId == null) return null;
-		Role role = this.client.getRoleById(configRoleId);
+		Role role = this.client.getRoleById(configRoleId).get();
 		return role;
 	}
 
-	public SelfUser getSelfUser() {
-		return this.client.getSelfUser();
+	public User getSelfUser() {
+		return this.client.getYourself();
+	}
+
+	public String getBotInvite() {
+		Permissions botPermissions = new PermissionsBuilder().setAllowed(
+			PermissionType.MANAGE_ROLES, 
+			PermissionType.SEND_MESSAGES, 
+			PermissionType.EMBED_LINKS, 
+			PermissionType.READ_MESSAGES, 
+			PermissionType.MANAGE_WEBHOOKS
+		)
+		.build();
+
+		return this.client.createBotInvite(botPermissions);
 	}
 }

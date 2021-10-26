@@ -46,12 +46,12 @@ public class ConfigUtil {
 		if (configString == null) {
 			boolean isOptional = configPath.endsWith("?");
 			if (isOptional) return null;
-			String message = formatMessage(Message.INTERNAL_REQUIRED_CONFIG_PATH, configPath);
+			String message = ConfigUtil.formatMessage(Message.INTERNAL_REQUIRED_CONFIG_PATH, configPath);
 			LoggerUtil.errorAndExit(message);
 			return null;
 		}
 
-		String formatted = formatPlaceholders(configString, placeholders, player);
+		String formatted = ConfigUtil.formatPlaceholders(configString, placeholders, player);
 		// todo: only translate on minecraft message
 		return ChatColor.translateAlternateColorCodes('&', formatted);
 	}

@@ -7,24 +7,26 @@ import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.Message;
 
-import net.dv8tion.jda.api.entities.SelfUser;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.javacord.api.DiscordApi;
+import org.javacord.api.entity.channel.ServerTextChannel;
+import org.javacord.api.entity.user.User;
+import org.javacord.api.event.server.ServerBecomesAvailableEvent;
+import org.javacord.api.listener.server.ServerBecomesAvailableListener;
 
-public class DiscordReadyListener extends ListenerAdapter {
+public class DiscordReadyListener implements ServerBecomesAvailableListener {
 	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
 
 	@Override
-	public void onReady(ReadyEvent event) {
-		SelfUser bot = event.getJDA().getSelfUser();
-		String configChannel = ConfigUtil.getString(ConfigPath.CHANNEL_ID);
-		TextChannel channel = event.getJDA().getTextChannelById(configChannel);
-		this.discordManager.ensureWebhook(channel);
+	public void onServerBecomesAvailable(ServerBecomesAvailableEvent event) {
+		DiscordApi client = event.getApi();
+		User selfUser = client.getYourself();
+		String configChannelId = ConfigUtil.getString(ConfigPath.CHANNEL_ID);
+		ServerTextChannel configChannel = client.getServerTextChannelById(configChannelId).get();
+		this.discordManager.ensureWebhook(configChannel);
 
 		String configChannelTopic = ConfigUtil.getString(ConfigPath.CHANNEL_TOPIC);
-		channel.getManager().setTopic(configChannelTopic).queue();
-		String message = ConfigUtil.formatMessage(Message.DISCORD_BOT_READY, bot.getAsTag());
+		configChannel.updateTopic(configChannelTopic);
+		String message = ConfigUtil.formatMessage(Message.INTERNAL_BOT_READY, selfUser.getDiscriminatedName());
 		LoggerUtil.info(message);
 	}
 }

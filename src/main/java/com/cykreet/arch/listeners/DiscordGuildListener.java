@@ -4,40 +4,45 @@ import java.util.HashMap;
 import java.util.UUID;
 
 import com.cykreet.arch.Arch;
+import com.cykreet.arch.managers.DatabaseManager;
 import com.cykreet.arch.managers.DiscordManager;
-import com.cykreet.arch.managers.PersistManager;
 import com.cykreet.arch.util.ConfigPath;
 import com.cykreet.arch.util.ConfigUtil;
+import com.cykreet.arch.util.DatabaseUtil;
 import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.Message;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.javacord.api.entity.message.MessageAuthor;
+import org.javacord.api.event.message.MessageCreateEvent;
+import org.javacord.api.event.server.member.ServerMemberBanEvent;
+import org.javacord.api.event.server.member.ServerMemberLeaveEvent;
+import org.javacord.api.listener.message.MessageCreateListener;
+import org.javacord.api.listener.server.member.ServerMemberBanListener;
+import org.javacord.api.listener.server.member.ServerMemberLeaveListener;
 
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.guild.GuildBanEvent;
-import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
-import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.api.hooks.ListenerAdapter;
-
-public class DiscordGuildListener extends ListenerAdapter {
+public class DiscordGuildListener implements MessageCreateListener, ServerMemberBanListener, ServerMemberLeaveListener {
 	private final DiscordManager discordManager = Arch.getManager(DiscordManager.class);
-	private final PersistManager database = Arch.getManager(PersistManager.class);
+	private final DatabaseManager database = Arch.getManager(DatabaseManager.class);
 	
 	@Override
-	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
+	public void onMessageCreate(MessageCreateEvent event) {
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_CHAT)) return;
-		User user = event.getAuthor();
-		String userId = user.getId(); 
-		String selfId = this.discordManager.getSelfUser().getId();
-		if (event.isWebhookMessage() || userId.equals(selfId)) return;
+		String discordServerId = event.getServer().get().getIdAsString();
+		String configServerId = this.discordManager.getGuild().getIdAsString();
+		if (!event.isServerMessage() || !discordServerId.equals(configServerId)) return;
+
+		MessageAuthor user = event.getMessageAuthor();
+		String userId = user.getIdAsString(); 
+		String selfId = this.discordManager.getSelfUser().getIdAsString();
+		if (user.isWebhook() || userId.equals(selfId)) return;
 		
 		HashMap<String, String> placeholders = new HashMap<String, String>();
 		String userName = user.getName();
-		String userDiscrim = user.getDiscriminator();
-		String content = event.getMessage().getContentStripped();
+		String userDiscrim = user.getDiscriminator().get();
+		String content = event.getReadableMessageContent();
 		placeholders.put("username", userName);
 		placeholders.put("discrim", userDiscrim);
 		placeholders.put("message", content);
@@ -48,27 +53,31 @@ public class DiscordGuildListener extends ListenerAdapter {
 	}
 
 	@Override
-	public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
+	public void onServerMemberBan(ServerMemberBanEvent event) {
+		String userId = event.getUser().getIdAsString();
+		if (!this.database.contains(userId)) return;
+		DatabaseUtil.unlinkPlayer(userId);
+	}
+
+	@Override
+	public void onServerMemberLeave(ServerMemberLeaveEvent event) {
+		String guildId = event.getServer().getIdAsString();
+		String configServerId = this.discordManager.getGuild().getIdAsString();
+		if (guildId.equals(configServerId)) return;
+
+		String userId = event.getUser().getIdAsString();
+		String botId = this.discordManager.getSelfUser().getIdAsString();
+		if (userId.equals(botId)) {
+			LoggerUtil.errorAndExit(Message.INTERNAL_BOT_REMOVED.content);
+			return;
+		}
+
 		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_IN_SERVER)) return;
-		String userId = event.getUser().getId();
 		UUID playerUUID = this.database.getPlayerId(userId);
 		if (playerUUID == null) return;
 		Player player = Bukkit.getPlayer(playerUUID);
+
 		if (player == null || !player.isOnline()) return;
 		player.kickPlayer("You are no longer in the required Discord server.");
-	}
-
-	@Override
-	public void onGuildBan(GuildBanEvent event) {
-		String userId = event.getUser().getId();
-		if (!this.database.contains(userId)) return;
-		this.database.unlinkPlayer(userId);
-	}
-
-	@Override
-	public void onGuildLeave(GuildLeaveEvent event) {
-		String guildId = event.getGuild().getId();
-		if (guildId != this.discordManager.getGuild().getId()) return;
-		LoggerUtil.errorAndExit(Message.INTERNAL_BOT_REMOVED.content);
 	}
 }

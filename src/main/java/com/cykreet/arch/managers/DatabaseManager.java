@@ -8,14 +8,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
 
-import com.cykreet.arch.Arch;
 import com.cykreet.arch.util.LoggerUtil;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
-public class PersistManager extends Manager {
+public class DatabaseManager extends Manager {
 	private Connection connection;
 	
 	public void connect(@NotNull File path, @NotNull String name) {
@@ -29,8 +26,8 @@ public class PersistManager extends Manager {
 			statement.execute(sql);
 			statement.close();
 			this.connection = connection;
-		} catch (SQLException e) {
-			LoggerUtil.errorAndExit("Failed to establish database connection.");
+		} catch (SQLException err) {
+			LoggerUtil.errorAndExit("Failed to establish database connection.", err);
 		}
 	}
 
@@ -41,7 +38,7 @@ public class PersistManager extends Manager {
 			ResultSet resultSet = statement.executeQuery(sql);
 			result = resultSet.getString("discord_id");
 			resultSet.close();
-		} catch (SQLException e) {
+		} catch (SQLException err) {
 			result = null;
 		}
 
@@ -55,7 +52,7 @@ public class PersistManager extends Manager {
 			ResultSet resultSet = statement.executeQuery(sql);
 			result = UUID.fromString(resultSet.getString("player_uuid"));
 			resultSet.close();
-		} catch (SQLException e) {
+		} catch (SQLException err) {
 			result = null;
 		}
 
@@ -69,7 +66,7 @@ public class PersistManager extends Manager {
 			ResultSet resultSet = statment.executeQuery(sql);
 			result = resultSet.next();
 			resultSet.close();
-		} catch (SQLException e) {
+		} catch (SQLException err) {
 			result = false;
 		}
 
@@ -83,7 +80,7 @@ public class PersistManager extends Manager {
 			ResultSet resultSet = statement.executeQuery(sql);
 			result = resultSet.next();
 			resultSet.close();
-		} catch (SQLException e) {
+		} catch (SQLException err) {
 			result = false;
 		}
 
@@ -100,8 +97,8 @@ public class PersistManager extends Manager {
 			statement.executeQuery(sql);
 			statement.close();
 			return true;
-		} catch (SQLException e) {
-			LoggerUtil.error("Failed to insert user into database:\n" + e.getStackTrace());
+		} catch (SQLException err) {
+			LoggerUtil.error("Failed to insert user into database:\n", err);
 			return false;
 		}
 	}
@@ -111,8 +108,8 @@ public class PersistManager extends Manager {
 		try (Statement statement = this.connection.createStatement()) {
 			statement.executeUpdate(sql);
 			statement.close();
-		} catch (SQLException e) {
-			LoggerUtil.error("Failed to remove user from database: \n" + e.getStackTrace());
+		} catch (SQLException err) {
+			LoggerUtil.error("Failed to remove user from database:\n", err);
 		}
 	}
 
@@ -121,8 +118,8 @@ public class PersistManager extends Manager {
 		try (Statement statement = this.connection.createStatement()) {
 			statement.executeUpdate(sql);
 			statement.close();
-		} catch (SQLException e) {
-			LoggerUtil.error("Failed to remove user from database: \n" + e.getStackTrace());
+		} catch (SQLException err) {
+			LoggerUtil.error("Failed to remove user from database:\n", err);
 		}
 	}
 
@@ -131,27 +128,8 @@ public class PersistManager extends Manager {
 		try {
 			if (connection.isClosed()) return;
 			this.connection.close();
-		} catch (SQLException e) {
-			LoggerUtil.error("Failed to close database connection.");
+		} catch (SQLException err) {
+			LoggerUtil.error("Failed to close database connection.", err);
 		}
-	}
-
-	public void unlinkPlayer(@NotNull String discordId) {
-		this.removeByMemberId(discordId);
-		UUID playerUUID = this.getPlayerId(discordId);
-		OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
-		if (!offlinePlayer.isOnline()) return;
-		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> {
-			offlinePlayer.getPlayer().kickPlayer("Unlinked Discord account.");
-		});
-	}
-
-	public void unlinkPlayer(@NotNull UUID playerUUID) {
-		this.removeByPlayerId(playerUUID);
-		OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(playerUUID);
-		if (!offlinePlayer.isOnline()) return;
-		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () -> {
-			offlinePlayer.getPlayer().kickPlayer("Unlinked Discord account.");
-		});
 	}
 }
