@@ -11,33 +11,33 @@ import org.jetbrains.annotations.Nullable;
 public class LoggerUtil {
 	private static Logger logger = Bukkit.getLogger();
 
-	private static void log(Level level, String message) {
+	private static void log(final Level level, final String message) {
 		logger.log(level, message);
 	}
 
-	public static void info(String message) {
+	public static void info(final String message) {
 		log(Level.INFO, message);
 	}
 
-	public static void warning(String message) {
+	public static void warning(final String message) {
 		log(Level.WARNING, message);
 	}
-	
-	public static void error(String message) {
+
+	public static void error(final String message) {
 		error(message, null);
 	}
-	
-	public static void error(String message, @Nullable Exception exception) {
+
+	public static void error(final String message, @Nullable final Exception exception) {
 		String output = message;
 		if (exception != null) output += "\n" + exception.getStackTrace().toString();
 		log(Level.SEVERE, output);
 	}
-	
-	public static void errorAndExit(String message) {
+
+	public static void errorAndExit(final String message) {
 		errorAndExit(message, null);
 	}
 
-	public static void errorAndExit(String message, @Nullable Exception exception) {
+	public static void errorAndExit(final String message, @Nullable final Exception exception) {
 		error(message, exception);
 		Bukkit.getPluginManager().disablePlugin(Arch.getInstance());
 	}

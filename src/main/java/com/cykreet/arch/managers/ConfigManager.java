@@ -11,8 +11,8 @@ public class ConfigManager extends Manager {
 	private static FileConfiguration config;
 	private static boolean papiSupport;
 	private static OfflinePlayer papiPlayer;
-	
-	public void load(FileConfiguration file) {
+
+	public void load(final FileConfiguration file) {
 		ConfigManager.config = file;
 		Plugin placeholderAPIPlugin = Bukkit.getPluginManager().getPlugin("PlaceholderAPI");
 		papiSupport = placeholderAPIPlugin != null && placeholderAPIPlugin.isEnabled();
@@ -26,7 +26,7 @@ public class ConfigManager extends Manager {
 		return papiSupport;
 	}
 
-	public void setPapiPlayer(@NotNull OfflinePlayer player) {
+	public void setPapiPlayer(@NotNull final OfflinePlayer player) {
 		papiPlayer = player;
 	}
 

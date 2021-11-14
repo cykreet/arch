@@ -5,6 +5,8 @@ import java.util.Map.Entry;
 
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.ConfigManager;
+import com.cykreet.arch.util.enums.ConfigPath;
+import com.cykreet.arch.util.enums.Message;
 
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -15,38 +17,49 @@ import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
 
 public class ConfigUtil {
-	private static final ConfigManager configManager = Arch.getManager(ConfigManager.class);
-	private static final FileConfiguration config = configManager.getConfig();
+	private static final ConfigManager CONFIG_MANAGER = Arch.getManager(ConfigManager.class);
+	private static final FileConfiguration CONFIG = CONFIG_MANAGER.getConfig();
 
-	public static boolean contains(@NotNull ConfigPath path) {
+	public static boolean contains(@NotNull final ConfigPath path) {
 		String configPath = path.label;
-		return config.contains(configPath);
+		return CONFIG.contains(configPath);
 	}
 
-	public static int getInt(@NotNull ConfigPath path) {
+	public static int getInt(@NotNull final ConfigPath path) {
 		String configPath = path.label;
-		return config.getInt(configPath);
+		return CONFIG.getInt(configPath);
 	}
 
-	public static String getString(@NotNull ConfigPath path) {
+	public static String getString(@NotNull final ConfigPath path) {
 		return ConfigUtil.getString(path, null, null);
 	}
 
-	public static String getString(@NotNull ConfigPath path, @NotNull Map<String, String> placeholders) {
+	public static String getString(
+		@NotNull final ConfigPath path,
+		@NotNull final Map<String, String> placeholders
+	) {
 		return ConfigUtil.getString(path, placeholders);
 	}
 
-	public static String getString(@NotNull ConfigPath path, @NotNull OfflinePlayer player) {
+	public static String getString(@NotNull final ConfigPath path, @NotNull final OfflinePlayer player) {
 		return ConfigUtil.getString(path, null, player);
 	}
 
-	public static String getString(@NotNull ConfigPath path, @Nullable Map<String, String> placeholders, @Nullable OfflinePlayer player) {
+	public static String getString(
+		@NotNull final ConfigPath path,
+		@Nullable final Map<String, String> placeholders,
+		@Nullable final OfflinePlayer player
+	) {
 		String configPath = path.label;
-		String configString = config.getString(configPath, null);
+		String configString = CONFIG.getString(configPath, null);
 		if (configString == null) {
 			boolean isOptional = configPath.endsWith("?");
 			if (isOptional) return null;
-			String message = ConfigUtil.formatMessage(Message.INTERNAL_REQUIRED_CONFIG_PATH, configPath);
+			String message = String.format(
+				"Required config path \"%s\" is invalid or missing.",
+				configPath
+			);
+
 			LoggerUtil.errorAndExit(message);
 			return null;
 		}
@@ -56,11 +69,15 @@ public class ConfigUtil {
 		return ChatColor.translateAlternateColorCodes('&', formatted);
 	}
 
-	public static String formatMessage(Message message, Object ...args) {
+	public static String formatMessage(final Message message, final Object ...args) {
 		return String.format(message.content, args);
 	}
 
-	private static String formatPlaceholders(@NotNull String input, @Nullable Map<String, String> placeholders, @Nullable OfflinePlayer player) {
+	private static String formatPlaceholders(
+		@NotNull final String input,
+		@Nullable final Map<String, String> placeholders,
+		@Nullable final OfflinePlayer player
+	) {
 		StringBuilder stringBuilder = new StringBuilder(input);
 		if (placeholders != null) {
 			for (Entry<String, String> entry : placeholders.entrySet()) {
@@ -77,8 +94,10 @@ public class ConfigUtil {
 		}
 
 		String output = stringBuilder.toString();
-		if (!configManager.getPlaceholderAPISupport() || PlaceholderAPI.containsPlaceholders(output)) return output;
-		OfflinePlayer placeholderPlayer = player != null ? player : configManager.getPapiPlayer();
+		if (!CONFIG_MANAGER.getPlaceholderAPISupport() || PlaceholderAPI.containsPlaceholders(output)) {
+			return output;
+		}
+		OfflinePlayer placeholderPlayer = player != null ? player : CONFIG_MANAGER.getPapiPlayer();
 		return PlaceholderAPI.setPlaceholders(placeholderPlayer, output);
 	}
 }

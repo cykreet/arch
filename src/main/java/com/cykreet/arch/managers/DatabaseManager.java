@@ -14,24 +14,24 @@ import org.jetbrains.annotations.NotNull;
 
 public class DatabaseManager extends Manager {
 	private Connection connection;
-	
-	public void connect(@NotNull File path, @NotNull String name) {
+
+	public void connect(@NotNull final File path, @NotNull final String name) {
 		if (connection != null) return;
 		File file = new File(path, name);
 		String url = "jdbc:sqlite:" + file.getAbsolutePath();
 		String sql = "CREATE TABLE IF NOT EXISTS linked_users (player_uuid BLOB PRIMARY KEY, discord_id TEXT NOT NULL);";
 		try {
-			Connection connection = DriverManager.getConnection(url);
-			Statement statement = connection.createStatement();
+			Connection databaseConnection = DriverManager.getConnection(url);
+			Statement statement = databaseConnection.createStatement();
 			statement.execute(sql);
 			statement.close();
-			this.connection = connection;
+			this.connection = databaseConnection;
 		} catch (SQLException err) {
 			LoggerUtil.errorAndExit("Failed to establish database connection.", err);
 		}
 	}
 
-	public String getMemberId(@NotNull UUID playerUUID) {
+	public String getMemberId(@NotNull final UUID playerUUID) {
 		String sql = String.format("SELECT * FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
 		String result;
 		try (Statement statement = this.connection.createStatement()) {
@@ -45,7 +45,7 @@ public class DatabaseManager extends Manager {
 		return result;
 	}
 
-	public UUID getPlayerId(@NotNull String discordId) {
+	public UUID getPlayerId(@NotNull final String discordId) {
 		String sql = String.format("SELECT * FROM linked_users WHERE discord_id = \"%s\";", discordId);
 		UUID result;
 		try (Statement statement = this.connection.createStatement()) {
@@ -59,7 +59,7 @@ public class DatabaseManager extends Manager {
 		return result;
 	}
 
-	public boolean contains(@NotNull String discordId) {
+	public boolean contains(@NotNull final String discordId) {
 		String sql = String.format("SELECT * FROM linked_users WHERE discord_id = \"%s\";", discordId);
 		boolean result;
 		try (Statement statment = this.connection.createStatement()) {
@@ -73,7 +73,7 @@ public class DatabaseManager extends Manager {
 		return result;
 	}
 
-	public boolean contains(@NotNull UUID playerUUID) {
+	public boolean contains(@NotNull final UUID playerUUID) {
 		String sql = String.format("SELECT * FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
 		boolean result;
 		try (Statement statement = this.connection.createStatement()) {
@@ -87,10 +87,10 @@ public class DatabaseManager extends Manager {
 		return result;
 	}
 
-	public boolean insert(@NotNull UUID playerUUID, @NotNull String discordId) {
+	public boolean insert(@NotNull final UUID playerUUID, @NotNull final String discordId) {
 		String sql = String.format(
-			"INSERT INTO linked_users (player_uuid, discord_id) VALUES (\"%h\", \"%s\");", 
-			playerUUID, 
+			"INSERT INTO linked_users (player_uuid, discord_id) VALUES (\"%h\", \"%s\");",
+			playerUUID,
 			discordId
 		);
 		try (Statement statement = this.connection.createStatement()) {
@@ -103,7 +103,7 @@ public class DatabaseManager extends Manager {
 		}
 	}
 
-	public void removeByPlayerId(@NotNull UUID playerUUID) {
+	public void removeByPlayerId(@NotNull final UUID playerUUID) {
 		String sql = String.format("DELETE FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
 		try (Statement statement = this.connection.createStatement()) {
 			statement.executeUpdate(sql);
@@ -113,7 +113,7 @@ public class DatabaseManager extends Manager {
 		}
 	}
 
-	public void removeByMemberId(@NotNull String discordId) {
+	public void removeByMemberId(@NotNull final String discordId) {
 		String sql = String.format("DELETE FROM linked_users WHERE discord_id = \"%s\";", discordId);
 		try (Statement statement = this.connection.createStatement()) {
 			statement.executeUpdate(sql);

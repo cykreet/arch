@@ -1,4 +1,4 @@
-package com.cykreet.arch.util;
+package com.cykreet.arch.util.enums;
 
 public enum ConfigPath {
 	BOT_TOKEN("discord_bot.token"),
@@ -19,7 +19,7 @@ public enum ConfigPath {
 
 	public final String label;
 
-	private ConfigPath(String label) {
+	ConfigPath(final String label) {
 		this.label = label;
 	}
 }

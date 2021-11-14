@@ -13,10 +13,9 @@ import com.cykreet.arch.managers.ConfigManager;
 import com.cykreet.arch.managers.DiscordManager;
 import com.cykreet.arch.managers.Manager;
 import com.cykreet.arch.managers.DatabaseManager;
-import com.cykreet.arch.util.ConfigPath;
 import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
-import com.cykreet.arch.util.Message;
+import com.cykreet.arch.util.enums.ConfigPath;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
@@ -28,14 +27,14 @@ public class Arch extends JavaPlugin {
 	private ConfigManager configManager;
 	private CodesManager codesManager;
 	private DatabaseManager database;
-	private static Arch INSTANCE;
+	private static Arch instance;
 
 	public Arch() {
-		INSTANCE = this;
+		instance = this;
 	}
-	
+
 	@Override
-	public void onEnable() {
+	public final void onEnable() {
 		this.saveDefaultConfig();
 		this.registerListeners();
 		this.database = getManager(DatabaseManager.class);
@@ -48,11 +47,11 @@ public class Arch extends JavaPlugin {
 			UUID defaultPlayer = UUID.fromString(configPlayer);
 			this.configManager.setPapiPlayer(Bukkit.getOfflinePlayer(defaultPlayer));
 		}
-		
+
 		int codeExpiry = ConfigUtil.getInt(ConfigPath.AUTH_CODE_EXPIRE);
 		this.codesManager.createCache(codeExpiry);
 		this.database.connect(this.getDataFolder(), "linked-users.sqlite");
-	
+
 		String botToken = ConfigUtil.getString(ConfigPath.BOT_TOKEN);
 		// handled by config util
 		if (botToken == null) return;
@@ -62,48 +61,59 @@ public class Arch extends JavaPlugin {
 		// disable if the bot hasn't been invited to the configured guild
 		if (this.discordManager.getGuild() == null) {
 			String inviteLink = this.discordManager.getBotInvite();
-			String message = ConfigUtil.formatMessage(Message.INTERNAL_BOT_NOT_IN_SERVER, inviteLink);
+			String message = String.format(
+				"Discord bot is not in the configured server,"
+				+ " please invite the bot through the following link:\n%s",
+				inviteLink
+			);
+
 			LoggerUtil.errorAndExit(message);
 		}
 	}
-	
+
 	@Override
-	public void onDisable() {
+	public final void onDisable() {
 		this.discordManager.logout();
 		Bukkit.getScheduler().cancelTasks(this);
 		if (this.codesManager != null) this.codesManager.getCache().invalidateAll();
 		this.database.close();
 	}
-	
-	public void reloadPlugin() {
+
+	public final void reloadPlugin() {
 		this.discordManager.logout();
 		this.database.close();
 		this.reloadConfig();
 		this.onEnable();
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	public static <Type extends Manager> Type getManager(Class<Type> managerClass) {
-		if (managers.containsKey(managerClass)) return (Type) managers.get(managerClass);
+	public static <Type extends Manager> Type getManager(final Class<Type> managerClass) {
+		if (managers.containsKey(managerClass)) {
+			return (Type) managers.get(managerClass);
+		}
 		try {
 			Constructor<?> constructor = managerClass.getConstructors()[0];
 			Type manager = (Type) constructor.newInstance();
 			managers.putIfAbsent((Class<Manager>) managerClass, manager);
 			return manager;
 		} catch (Exception exception) {
-			String message = String.format("Failed to instantiate manager \"%s\".", managerClass.getSimpleName());
+			String message = String.format(
+				"Failed to instantiate manager \"%s\".",
+				managerClass.getSimpleName()
+			);
+
 			LoggerUtil.errorAndExit(message);
 			return null;
 		}
 	}
-	
+
 	public static boolean getReady() {
 		// if the guild isn't null, we *should* be ready to handle things
 		return Arch.getManager(DiscordManager.class).getGuild() != null;
 	}
-	
+
 	public static Arch getInstance() {
-		return Arch.INSTANCE;
+		return Arch.instance;
 	}
 
 	private void registerListeners() {
@@ -112,7 +122,7 @@ public class Arch extends JavaPlugin {
 		this.registerListener(new PlayerChatListener());
 	}
 
-	private void registerListener(Listener listener) {
+	private void registerListener(final Listener listener) {
 		this.getServer().getPluginManager().registerEvents(listener, this);
 	}
 }

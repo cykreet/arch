@@ -32,7 +32,9 @@ dependencies {
     compileOnly "org.jetbrains:annotations:16.0.2"
     
     implementation "com.github.ben-manes.caffeine:caffeine:2.9.0"
-    implementation "org.javacord:javacord:3.3.2"
+    implementation("net.dv8tion:JDA:4.3.0_277") {
+        exclude module: "opus-java"
+    }
 }
 
 processResources {
