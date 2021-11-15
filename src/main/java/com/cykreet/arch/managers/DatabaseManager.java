@@ -19,7 +19,8 @@ public class DatabaseManager extends Manager {
 		if (connection != null) return;
 		File file = new File(path, name);
 		String url = "jdbc:sqlite:" + file.getAbsolutePath();
-		String sql = "CREATE TABLE IF NOT EXISTS linked_users (player_uuid BLOB PRIMARY KEY, discord_id TEXT NOT NULL);";
+		String sql = "CREATE TABLE IF NOT EXISTS linked_users"
+			+ " (player_uuid BLOB PRIMARY KEY, discord_id TEXT NOT NULL);";
 		try {
 			Connection databaseConnection = DriverManager.getConnection(url);
 			Statement statement = databaseConnection.createStatement();

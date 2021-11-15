@@ -53,9 +53,14 @@ public class DiscordListener extends ListenerAdapter {
 		this.discordManager.ensureWebhook(configChannel);
 
 		String configChannelTopic = ConfigUtil.getString(ConfigPath.CHANNEL_TOPIC);
-		configChannel.getManager().setTopic(configChannelTopic);
+		configChannel.getManager().setTopic(configChannelTopic).queue();
 		String guildName = this.discordManager.getGuild().getName();
-		String message = String.format("Discord bot \"%s\", is ready and configured for the \"%s\" Discord server.", selfUser.getAsTag(), guildName);
+		String message = String.format(
+			"Discord bot \"%s\", is ready and configured for the \"%s\" Discord server.",
+			selfUser.getAsTag(),
+			guildName
+		);
+
 		LoggerUtil.info(message);
 	}
 
@@ -129,7 +134,7 @@ public class DiscordListener extends ListenerAdapter {
 		}
 
 		String message = ConfigUtil.formatMessage(Message.DISCORD_ALREADY_LINKED_ACCOUNT, playerName);
-		channel.sendMessage(message);
+		channel.sendMessage(message).queue();
 	}
 
 	@Override
