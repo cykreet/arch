@@ -5,6 +5,7 @@ import java.util.logging.Logger;
 
 import com.cykreet.arch.Arch;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ public class LoggerUtil {
 
 	public static void error(final String message, @Nullable final Exception exception) {
 		String output = message;
-		if (exception != null) output += "\n" + exception.getStackTrace().toString();
+		if (exception != null) output += "\n" + ExceptionUtils.getStackTrace(exception);
 		log(Level.SEVERE, output);
 	}
 
