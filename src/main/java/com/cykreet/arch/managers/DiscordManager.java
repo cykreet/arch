@@ -23,13 +23,15 @@ import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 public class DiscordManager extends Manager {
 	public static final Permission[] PERMISSIONS = {
 		Permission.MESSAGE_READ,
 		Permission.MESSAGE_WRITE,
 		Permission.MESSAGE_EMBED_LINKS,
-		Permission.MANAGE_WEBHOOKS
+		Permission.MANAGE_WEBHOOKS,
+		Permission.MANAGE_ROLES
 	};
 	private Webhook destinationWebhook;
 	private JDA client;
@@ -37,11 +39,17 @@ public class DiscordManager extends Manager {
 		GatewayIntent.GUILD_MEMBERS,
 		GatewayIntent.DIRECT_MESSAGES,
 		GatewayIntent.GUILD_WEBHOOKS,
-		GatewayIntent.GUILD_MESSAGES
+		GatewayIntent.GUILD_MESSAGES,
+	};
+	private final CacheFlag[] disabledCaches = {
+		CacheFlag.EMOTE,
+		CacheFlag.VOICE_STATE,
+		CacheFlag.MEMBER_OVERRIDES
 	};
 
 	public void login(@NotNull final String token, @NotNull final String activity) {
 		JDABuilder builder = JDABuilder.create(token, Arrays.asList(intents));
+		builder.disableCache(Arrays.asList(disabledCaches));
 		builder.setActivity(Activity.playing(activity));
 		builder.addEventListeners(new DiscordListener());
 		builder.setToken(token);
@@ -50,9 +58,9 @@ public class DiscordManager extends Manager {
 			this.client = builder.build();
 			this.client.awaitReady();
 		} catch (LoginException exception) {
-			LoggerUtil.errorAndExit("boo");
+			LoggerUtil.errorAndExit("Failed to establish connection with Discord:", exception);
 		} catch (Exception exception) {
-			LoggerUtil.errorAndExit("faield", exception);
+			LoggerUtil.errorAndExit("An unknown error occurred whilst starting the bot:", exception);
 		}
 	}
 
@@ -71,11 +79,6 @@ public class DiscordManager extends Manager {
 			Webhook configWebhook = webhooks.get(0);
 			if (configWebhook != null) this.destinationWebhook = configWebhook;
 			else channel.createWebhook(name).queue((webhook) -> {
-				if (webhook == null) {
-					LoggerUtil.error("A webhook could not be created.");
-					return;
-				}
-
 				this.destinationWebhook = webhook;
 			});
 		});
