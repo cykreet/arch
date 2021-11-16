@@ -1,7 +1,9 @@
 package com.cykreet.arch;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -10,16 +12,21 @@ import com.cykreet.arch.listeners.PlayerGenericListener;
 import com.cykreet.arch.listeners.PlayerPreLoginListener;
 import com.cykreet.arch.managers.CodesManager;
 import com.cykreet.arch.managers.ConfigManager;
+import com.cykreet.arch.managers.DatabaseManager;
 import com.cykreet.arch.managers.DiscordManager;
 import com.cykreet.arch.managers.Manager;
-import com.cykreet.arch.managers.DatabaseManager;
 import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.enums.ConfigPath;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.SelfUser;
 
 public class Arch extends JavaPlugin {
 	private static Map<Class<Manager>, Manager> managers = new HashMap<>();
@@ -68,7 +75,21 @@ public class Arch extends JavaPlugin {
 			);
 
 			LoggerUtil.errorAndExit(message);
+			return;
 		}
+
+		SelfUser selfUser = this.discordManager.getSelfUser();
+		Member botMember = this.discordManager.getGuild().getMember(selfUser);
+		List<String> missingPermissions = new ArrayList<String>();
+		for (Permission permission : DiscordManager.PERMISSIONS) {
+			if (botMember.hasPermission(permission)) return;
+			missingPermissions.add(permission.name());
+		}
+
+		if (missingPermissions.isEmpty()) return;
+		String stringifiedPermissions = StringUtils.join(missingPermissions, ", ");
+		String message = String.format("Bot is missing required permissions: %s", stringifiedPermissions);
+		LoggerUtil.errorAndExit(message);
 	}
 
 	@Override

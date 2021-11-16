@@ -25,6 +25,12 @@ import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
 public class DiscordManager extends Manager {
+	public static final Permission[] PERMISSIONS = {
+		Permission.MESSAGE_READ,
+		Permission.MESSAGE_WRITE,
+		Permission.MESSAGE_EMBED_LINKS,
+		Permission.MANAGE_WEBHOOKS
+	};
 	private Webhook destinationWebhook;
 	private JDA client;
 	private final GatewayIntent[] intents = {
@@ -65,6 +71,11 @@ public class DiscordManager extends Manager {
 			Webhook configWebhook = webhooks.get(0);
 			if (configWebhook != null) this.destinationWebhook = configWebhook;
 			else channel.createWebhook(name).queue((webhook) -> {
+				if (webhook == null) {
+					LoggerUtil.error("A webhook could not be created.");
+					return;
+				}
+
 				this.destinationWebhook = webhook;
 			});
 		});
@@ -76,7 +87,7 @@ public class DiscordManager extends Manager {
 		@NotNull final String message
 	) {
 		if (this.destinationWebhook == null) {
-			LoggerUtil.error("Manageable webhook has not been created, try reloading the plugin.");
+			LoggerUtil.error("Manageable webhook has not been created.");
 			return;
 		}
 
@@ -113,11 +124,6 @@ public class DiscordManager extends Manager {
 	}
 
 	public String getBotInvite() {
-		return this.client.getInviteUrl(
-			Permission.MESSAGE_READ,
-			Permission.MESSAGE_WRITE,
-			Permission.MESSAGE_EMBED_LINKS,
-			Permission.MANAGE_WEBHOOKS
-		);
+		return this.client.getInviteUrl(DiscordManager.PERMISSIONS);
 	}
 }
