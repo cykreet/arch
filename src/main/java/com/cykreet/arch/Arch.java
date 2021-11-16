@@ -25,6 +25,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.SelfUser;
 
@@ -66,7 +67,8 @@ public class Arch extends JavaPlugin {
 		this.discordManager.login(botToken, activity);
 
 		// disable if the bot hasn't been invited to the configured guild
-		if (this.discordManager.getGuild() == null) {
+		Guild guild = this.discordManager.getGuild();
+		if (guild == null) {
 			String inviteLink = this.discordManager.getBotInvite();
 			String message = String.format(
 				"Discord bot is not in the configured server,"
@@ -79,7 +81,7 @@ public class Arch extends JavaPlugin {
 		}
 
 		SelfUser selfUser = this.discordManager.getSelfUser();
-		Member botMember = this.discordManager.getGuild().getMember(selfUser);
+		Member botMember = guild.getMember(selfUser);
 		List<String> missingPermissions = new ArrayList<String>();
 		for (Permission permission : DiscordManager.PERMISSIONS) {
 			if (botMember.hasPermission(permission)) continue;

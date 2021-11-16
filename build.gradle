@@ -12,7 +12,7 @@ apply plugin: "java"
 apply plugin: "com.github.johnrengelman.shadow"
 
 group = "com.cykreet"
-version = "0.5.5"
+version = "0.5.9"
 targetCompatibility = 1.16
 
 repositories {
@@ -31,6 +31,7 @@ dependencies {
     compileOnly "me.clip:placeholderapi:2.10.9"
     compileOnly "org.jetbrains:annotations:16.0.2"
     
+    implementation "ch.qos.logback:logback-classic:1.2.6"
     implementation "com.github.ben-manes.caffeine:caffeine:2.9.0"
     implementation("net.dv8tion:JDA:4.3.0_277") {
         exclude module: "opus-java"
