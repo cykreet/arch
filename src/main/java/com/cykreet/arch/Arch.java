@@ -82,7 +82,7 @@ public class Arch extends JavaPlugin {
 		Member botMember = this.discordManager.getGuild().getMember(selfUser);
 		List<String> missingPermissions = new ArrayList<String>();
 		for (Permission permission : DiscordManager.PERMISSIONS) {
-			if (botMember.hasPermission(permission)) return;
+			if (botMember.hasPermission(permission)) continue;
 			missingPermissions.add(permission.name());
 		}
 
