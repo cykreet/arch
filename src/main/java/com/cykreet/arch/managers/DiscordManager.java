@@ -1,5 +1,7 @@
 package com.cykreet.arch.managers;
 
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Arrays;
 
@@ -10,6 +12,8 @@ import com.cykreet.arch.listeners.DiscordListener;
 import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.enums.ConfigPath;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +90,7 @@ public class DiscordManager extends Manager {
 
 	public void sendWebhookMessage(
 		@NotNull final String name,
-		@NotNull final URL avatar,
+		@NotNull final String avatar,
 		@NotNull final String message
 	) {
 		if (this.destinationWebhook == null) {
@@ -94,7 +98,35 @@ public class DiscordManager extends Manager {
 			return;
 		}
 
-		// todo
+		try {
+			URL webhookUrl =  new URL(this.destinationWebhook.getUrl());
+			HttpURLConnection connection = (HttpURLConnection) webhookUrl.openConnection();
+			connection.setRequestProperty("Content-Type", "application/json; utf-8");
+			connection.setRequestMethod("POST");
+			connection.setDoOutput(true);
+			connection.connect();
+
+			JsonArray allowedMentions = new JsonArray();
+			allowedMentions.add("users");
+			JsonObject body = new JsonObject();
+			body.addProperty("username", name);
+			body.addProperty("avatar_url", avatar);
+			body.addProperty("content", message);
+			body.add("allowed_mentions", allowedMentions);
+
+
+			OutputStream os = connection.getOutputStream();
+			byte[] input = body.getAsString().getBytes("utf-8");
+			os.write(input, 0, input.length);
+			os.flush();
+			os.close();
+
+			if (connection.getResponseCode() > HttpURLConnection.HTTP_BAD_REQUEST) {
+				throw new Exception(connection.getResponseMessage());
+			}
+		} catch (Exception exception) {
+			LoggerUtil.error("Failed to execute webhook:", exception);
+		}
 	}
 
 	public void sendMessage(@NotNull final String message) {
