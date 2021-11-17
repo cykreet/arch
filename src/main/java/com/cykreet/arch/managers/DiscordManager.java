@@ -106,14 +106,16 @@ public class DiscordManager extends Manager {
 			connection.setDoOutput(true);
 			connection.connect();
 
-			JsonArray allowedMentions = new JsonArray();
-			allowedMentions.add("users");
+			JsonArray allowedMentionsUsers = new JsonArray();
+			allowedMentionsUsers.add("users");
+			JsonObject allowedMentions = new JsonObject();
+			allowedMentions.add("parse", allowedMentionsUsers);
+
 			JsonObject body = new JsonObject();
 			body.addProperty("username", name);
 			body.addProperty("avatar_url", avatar);
 			body.addProperty("content", message);
 			body.add("allowed_mentions", allowedMentions);
-
 
 			OutputStream os = connection.getOutputStream();
 			byte[] input = body.getAsString().getBytes("utf-8");
