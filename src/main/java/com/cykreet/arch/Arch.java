@@ -2,6 +2,7 @@ package com.cykreet.arch;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,8 +27,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.SelfUser;
+import net.dv8tion.jda.api.entities.TextChannel;
 
 public class Arch extends JavaPlugin {
 	private static Map<Class<Manager>, Manager> managers = new HashMap<>();
@@ -81,10 +82,11 @@ public class Arch extends JavaPlugin {
 		}
 
 		SelfUser selfUser = this.discordManager.getSelfUser();
-		Member botMember = guild.getMember(selfUser);
+		TextChannel channel = this.discordManager.getChannel();
+		EnumSet<Permission> botPermissions = guild.getMember(selfUser).getPermissions(channel);
 		List<String> missingPermissions = new ArrayList<String>();
 		for (Permission permission : DiscordManager.PERMISSIONS) {
-			if (botMember.hasPermission(permission)) continue;
+			if (botPermissions.contains(permission)) continue;
 			missingPermissions.add(permission.name());
 		}
 
