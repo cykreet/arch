@@ -12,7 +12,7 @@ apply plugin: "java"
 apply plugin: "com.github.johnrengelman.shadow"
 
 group = "com.cykreet"
-version = "0.5.9"
+version = "0.5.11"
 targetCompatibility = 1.16
 
 repositories {

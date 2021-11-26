@@ -3,8 +3,12 @@ package com.cykreet.arch.managers;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 
+import javax.naming.InsufficientResourcesException;
 import javax.security.auth.login.LoginException;
 
 import com.cykreet.arch.Arch;
@@ -12,9 +16,11 @@ import com.cykreet.arch.listeners.DiscordListener;
 import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.enums.ConfigPath;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import net.dv8tion.jda.api.JDA;
@@ -25,6 +31,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.Webhook;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -35,6 +42,7 @@ public class DiscordManager extends Manager {
 		Permission.MESSAGE_WRITE,
 		Permission.MESSAGE_EMBED_LINKS,
 		Permission.MANAGE_WEBHOOKS,
+		Permission.MANAGE_CHANNEL,
 		Permission.MANAGE_ROLES
 	};
 	private Webhook destinationWebhook;
@@ -47,11 +55,17 @@ public class DiscordManager extends Manager {
 	};
 	private final CacheFlag[] disabledCaches = {
 		CacheFlag.EMOTE,
+		CacheFlag.ACTIVITY,
 		CacheFlag.VOICE_STATE,
+		CacheFlag.ONLINE_STATUS,
+		CacheFlag.CLIENT_STATUS,
 		CacheFlag.MEMBER_OVERRIDES
 	};
 
-	public void login(@NotNull final String token, @NotNull final String activity) {
+	public void login(
+		@NotNull final String token,
+		@NotNull final String activity
+	) throws InsufficientResourcesException {
 		JDABuilder builder = JDABuilder.create(token, Arrays.asList(intents));
 		builder.disableCache(Arrays.asList(disabledCaches));
 		builder.setActivity(Activity.playing(activity));
@@ -61,8 +75,32 @@ public class DiscordManager extends Manager {
 		try {
 			this.client = builder.build();
 			this.client.awaitReady();
+
+			SelfUser selfUser = this.getSelfUser();
+			TextChannel channel = this.getChannel();
+			EnumSet<Permission> botPermissions = this.getUserPermissions(selfUser);
+			List<String> missingPermissions = new ArrayList<String>();
+			for (Permission permission : DiscordManager.PERMISSIONS) {
+				if (botPermissions.contains(permission)) continue;
+				missingPermissions.add(permission.name());
+			}
+
+			if (!missingPermissions.isEmpty()) {
+				String stringifiedPermissions = StringUtils.join(missingPermissions, ", ");
+				String message = String.format(
+					"Bot is missing required permissions: %s",
+					stringifiedPermissions
+				);
+
+				// todo: use different exception
+				throw new InsufficientResourcesException(message);
+			}
+
+			this.ensureWebhook(channel);
 		} catch (LoginException exception) {
 			LoggerUtil.errorAndExit("Failed to establish connection with Discord:", exception);
+		} catch (InsufficientResourcesException exception) {
+			throw exception;
 		} catch (Exception exception) {
 			LoggerUtil.errorAndExit("An unknown error occurred whilst starting the bot:", exception);
 		}
@@ -79,8 +117,11 @@ public class DiscordManager extends Manager {
 		SelfUser selfUser = this.client.getSelfUser();
 		String name = Arch.getInstance().getName();
 		channel.retrieveWebhooks().queue((webhooks) -> {
-			webhooks.removeIf((webhook) -> !webhook.getOwner().getId().equals(selfUser.getId()));
-			Webhook configWebhook = webhooks.get(0);
+			Webhook configWebhook = webhooks.stream()
+			.filter((webhook) -> webhook.getOwner().getId().equals(selfUser.getId()))
+			.findFirst()
+			.orElse(null);
+
 			if (configWebhook != null) this.destinationWebhook = configWebhook;
 			else channel.createWebhook(name).queue((webhook) -> {
 				this.destinationWebhook = webhook;
@@ -118,7 +159,8 @@ public class DiscordManager extends Manager {
 			body.add("allowed_mentions", allowedMentions);
 
 			OutputStream os = connection.getOutputStream();
-			byte[] input = body.getAsString().getBytes("utf-8");
+			String bodyString = new Gson().toJson(body);
+			byte[] input = bodyString.getBytes("utf-8");
 			os.write(input, 0, input.length);
 			os.flush();
 			os.close();
@@ -154,6 +196,12 @@ public class DiscordManager extends Manager {
 
 		Role role = this.getGuild().getRoleById(configRoleId);
 		return role;
+	}
+
+	public EnumSet<Permission> getUserPermissions(final User user) {
+		Guild guild = this.getGuild();
+		TextChannel channel = this.getChannel();
+		return guild.getMember(user).getPermissions(channel);
 	}
 
 	public SelfUser getSelfUser() {

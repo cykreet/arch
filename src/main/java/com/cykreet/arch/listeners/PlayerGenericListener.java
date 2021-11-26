@@ -56,6 +56,7 @@ public class PlayerGenericListener implements Listener {
 
 		String deathMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_DEATH, placeholders, player);
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () ->
-			this.discordManager.sendMessage(deathMessage));
+			this.discordManager.sendMessage(deathMessage)
+		);
 	}
 }

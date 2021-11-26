@@ -20,7 +20,7 @@ public class DatabaseManager extends Manager {
 		File file = new File(path, name);
 		String url = "jdbc:sqlite:" + file.getAbsolutePath();
 		String sql = "CREATE TABLE IF NOT EXISTS linked_users"
-			+ " (player_uuid BLOB PRIMARY KEY, discord_id TEXT NOT NULL);";
+			+ " (player_uuid TEXT PRIMARY KEY, discord_id TEXT NOT NULL);";
 		try {
 			Connection databaseConnection = DriverManager.getConnection(url);
 			Statement statement = databaseConnection.createStatement();
@@ -33,7 +33,11 @@ public class DatabaseManager extends Manager {
 	}
 
 	public String getMemberId(@NotNull final UUID playerUUID) {
-		String sql = String.format("SELECT * FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
+		String sql = String.format(
+			"SELECT * FROM linked_users WHERE player_uuid = \"%s\";",
+			playerUUID.toString()
+		);
+
 		String result;
 		try (Statement statement = this.connection.createStatement()) {
 			ResultSet resultSet = statement.executeQuery(sql);
@@ -75,7 +79,11 @@ public class DatabaseManager extends Manager {
 	}
 
 	public boolean contains(@NotNull final UUID playerUUID) {
-		String sql = String.format("SELECT * FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
+		String sql = String.format(
+			"SELECT * FROM linked_users WHERE player_uuid = \"%s\";",
+			playerUUID.toString()
+		);
+
 		boolean result;
 		try (Statement statement = this.connection.createStatement()) {
 			ResultSet resultSet = statement.executeQuery(sql);
@@ -90,12 +98,13 @@ public class DatabaseManager extends Manager {
 
 	public boolean insert(@NotNull final UUID playerUUID, @NotNull final String discordId) {
 		String sql = String.format(
-			"INSERT INTO linked_users (player_uuid, discord_id) VALUES (\"%h\", \"%s\");",
-			playerUUID,
+			"INSERT INTO linked_users (player_uuid, discord_id) VALUES (\"%s\", \"%s\");",
+			playerUUID.toString(),
 			discordId
 		);
+
 		try (Statement statement = this.connection.createStatement()) {
-			statement.executeQuery(sql);
+			statement.executeUpdate(sql);
 			statement.close();
 			return true;
 		} catch (SQLException err) {
@@ -105,7 +114,11 @@ public class DatabaseManager extends Manager {
 	}
 
 	public void removeByPlayerId(@NotNull final UUID playerUUID) {
-		String sql = String.format("DELETE FROM linked_users WHERE player_uuid = \"%h\";", playerUUID);
+		String sql = String.format(
+			"DELETE FROM linked_users WHERE player_uuid = \"%s\";",
+			playerUUID.toString()
+		);
+
 		try (Statement statement = this.connection.createStatement()) {
 			statement.executeUpdate(sql);
 			statement.close();

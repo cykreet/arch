@@ -32,7 +32,8 @@ public class PlayerChatListener implements Listener {
 		String message = event.getMessage();
 		String playerAvatar = PlayerChatListener.getPlayerAvatar(player.getUniqueId());
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () ->
-			this.discordManager.sendWebhookMessage(playerName, playerAvatar, message));
+			this.discordManager.sendWebhookMessage(playerName, playerAvatar, message)
+		);
 	}
 
 	public static String getPlayerAvatar(@NotNull final UUID playerUUID) {

@@ -1,9 +1,10 @@
 package com.cykreet.arch.listeners;
 
 import java.time.Duration;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.CodesManager;
@@ -22,6 +23,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.SelfUser;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -47,10 +49,12 @@ public class DiscordListener extends ListenerAdapter {
 	@Override
 	public void onReady(final ReadyEvent event) {
 		JDA client = event.getJDA();
-		SelfUser selfUser = client.getSelfUser();
 		String configChannelId = ConfigUtil.getString(ConfigPath.CHANNEL_ID);
 		TextChannel configChannel = client.getTextChannelById(configChannelId);
-		this.discordManager.ensureWebhook(configChannel);
+
+		SelfUser selfUser = client.getSelfUser();
+		EnumSet<Permission> permissions = this.discordManager.getUserPermissions(selfUser);
+		if (!permissions.contains(Permission.MANAGE_CHANNEL)) return;
 
 		String configChannelTopic = ConfigUtil.getString(ConfigPath.CHANNEL_TOPIC);
 		configChannel.getManager().setTopic(configChannelTopic).queue();
@@ -69,7 +73,7 @@ public class DiscordListener extends ListenerAdapter {
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_CHAT)) return;
 		String discordChannelId = event.getChannel().getId();
 		String configChannelId = this.discordManager.getChannel().getId();
-		if (!event.isWebhookMessage() || !discordChannelId.equals(configChannelId)) return;
+		if (event.isWebhookMessage() || !discordChannelId.equals(configChannelId)) return;
 
 		User user = event.getAuthor();
 		String userId = user.getId();
@@ -111,7 +115,7 @@ public class DiscordListener extends ListenerAdapter {
 				.orElse(null);
 
 			if (cachedPlayerEntry == null) {
-				channel.sendMessage(Message.DISCORD_INVALID_CODE.content);
+				channel.sendMessage(Message.DISCORD_INVALID_CODE.content).queue();
 				return;
 			}
 
@@ -120,7 +124,7 @@ public class DiscordListener extends ListenerAdapter {
 			OfflinePlayer player = Bukkit.getOfflinePlayer(playerUUID);
 			this.database.insert(playerUUID, userId);
 			String message = ConfigUtil.formatMessage(Message.DISCORD_LINKED_ACCOUNT, player.getName());
-			channel.sendMessage(message);
+			channel.sendMessage(message).queue();
 			return;
 		}
 
@@ -129,7 +133,7 @@ public class DiscordListener extends ListenerAdapter {
 		if (messageContent.equalsIgnoreCase("unlink")) {
 			DatabaseUtil.unlinkPlayer(playerId);
 			String message = ConfigUtil.formatMessage(Message.DISCORD_UNLINKED_ACCOUNT, playerName);
-			channel.sendMessage(message);
+			channel.sendMessage(message).queue();
 			return;
 		}
 
