@@ -3,12 +3,9 @@ package com.cykreet.arch.managers;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.List;
 
-import javax.naming.InsufficientResourcesException;
 import javax.security.auth.login.LoginException;
 
 import com.cykreet.arch.Arch;
@@ -20,7 +17,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import net.dv8tion.jda.api.JDA;
@@ -37,6 +33,8 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 public class DiscordManager extends Manager {
+	private Webhook destinationWebhook;
+	private JDA client;
 	public static final Permission[] PERMISSIONS = {
 		Permission.MESSAGE_READ,
 		Permission.MESSAGE_WRITE,
@@ -45,8 +43,6 @@ public class DiscordManager extends Manager {
 		Permission.MANAGE_CHANNEL,
 		Permission.MANAGE_ROLES
 	};
-	private Webhook destinationWebhook;
-	private JDA client;
 	private final GatewayIntent[] intents = {
 		GatewayIntent.GUILD_MEMBERS,
 		GatewayIntent.DIRECT_MESSAGES,
@@ -62,45 +58,18 @@ public class DiscordManager extends Manager {
 		CacheFlag.MEMBER_OVERRIDES
 	};
 
-	public void login(
-		@NotNull final String token,
-		@NotNull final String activity
-	) throws InsufficientResourcesException {
-		JDABuilder builder = JDABuilder.create(token, Arrays.asList(intents));
-		builder.disableCache(Arrays.asList(disabledCaches));
-		builder.setActivity(Activity.playing(activity));
-		builder.addEventListeners(new DiscordListener());
-		builder.setToken(token);
-
+	public void login(@NotNull final String token) {
 		try {
+			JDABuilder builder = JDABuilder.create(token, Arrays.asList(intents));
+			builder.setActivity(Activity.playing(ConfigUtil.getString(ConfigPath.BOT_STATUS)));
+			builder.disableCache(Arrays.asList(disabledCaches));
+			builder.addEventListeners(new DiscordListener());
+			builder.setToken(token);
+
 			this.client = builder.build();
 			this.client.awaitReady();
-
-			SelfUser selfUser = this.getSelfUser();
-			TextChannel channel = this.getChannel();
-			EnumSet<Permission> botPermissions = this.getUserPermissions(selfUser);
-			List<String> missingPermissions = new ArrayList<String>();
-			for (Permission permission : DiscordManager.PERMISSIONS) {
-				if (botPermissions.contains(permission)) continue;
-				missingPermissions.add(permission.name());
-			}
-
-			if (!missingPermissions.isEmpty()) {
-				String stringifiedPermissions = StringUtils.join(missingPermissions, ", ");
-				String message = String.format(
-					"Bot is missing required permissions: %s",
-					stringifiedPermissions
-				);
-
-				// todo: use different exception
-				throw new InsufficientResourcesException(message);
-			}
-
-			this.ensureWebhook(channel);
 		} catch (LoginException exception) {
 			LoggerUtil.errorAndExit("Failed to establish connection with Discord:", exception);
-		} catch (InsufficientResourcesException exception) {
-			throw exception;
 		} catch (Exception exception) {
 			LoggerUtil.errorAndExit("An unknown error occurred whilst starting the bot:", exception);
 		}

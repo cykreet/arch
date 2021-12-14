@@ -1,11 +1,12 @@
 package com.cykreet.arch;
 
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
-import javax.naming.InsufficientResourcesException;
 
 import com.cykreet.arch.listeners.PlayerChatListener;
 import com.cykreet.arch.listeners.PlayerGenericListener;
@@ -19,9 +20,13 @@ import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.enums.ConfigPath;
 
+import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.SelfUser;
 
 public class Arch extends JavaPlugin {
 	private static Map<Class<Manager>, Manager> managers = new HashMap<>();
@@ -54,29 +59,42 @@ public class Arch extends JavaPlugin {
 		this.codesManager.createCache(codeExpiry);
 		this.database.connect(this.getDataFolder(), "linked-users.sqlite");
 
+		// if null, ConfigUtil should take care of exiting and disabling the plugin
 		String botToken = ConfigUtil.getString(ConfigPath.BOT_TOKEN);
-		// handled by config util
 		if (botToken == null) return;
-		String activity = ConfigUtil.getString(ConfigPath.BOT_STATUS);
 
-		try {
-			this.discordManager.login(botToken, activity);
-		} catch (InsufficientResourcesException exception) {
-			LoggerUtil.errorAndExit(exception.getMessage());
+		this.discordManager.login(botToken);
+		// if we can't find the configured guild, it probably means the bot
+		// hans't been properly invited
+		if (this.discordManager.getGuild() == null) {
+			String inviteLink = this.discordManager.getBotInvite();
+			String message = String.format(
+				"Discord bot is not in the configured server,"
+				+ " please invite the bot through the following link:\n%s",
+				inviteLink
+			);
+
+			LoggerUtil.errorAndExit(message);
 			return;
 		}
 
-		// disable if the bot hasn't been invited to the configured guild
-		if (this.discordManager.getGuild() != null) return;
-		String inviteLink = this.discordManager.getBotInvite();
-		String message = String.format(
-			"Discord bot is not in the configured server,"
-			+ " please invite the bot through the following link:\n%s",
-			inviteLink
-		);
+		SelfUser selfUser = this.discordManager.getSelfUser();
+		EnumSet<Permission> botPermissions = this.discordManager.getUserPermissions(selfUser);
+		List<String> missingPermissions = new ArrayList<String>();
+		for (Permission permission : DiscordManager.PERMISSIONS) {
+			if (botPermissions.contains(permission)) continue;
+			missingPermissions.add(permission.name());
+		}
 
-		LoggerUtil.errorAndExit(message);
-		return;
+		if (!missingPermissions.isEmpty()) {
+			String stringifiedPermissions = StringUtils.join(missingPermissions, ", ");
+			String message = String.format(
+				"Discord bot is missing required permissions: %s",
+				stringifiedPermissions
+			);
+
+			LoggerUtil.errorAndExit(message);
+		}
 	}
 
 	@Override

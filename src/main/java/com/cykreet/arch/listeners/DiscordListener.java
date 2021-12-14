@@ -55,6 +55,7 @@ public class DiscordListener extends ListenerAdapter {
 		SelfUser selfUser = client.getSelfUser();
 		EnumSet<Permission> permissions = this.discordManager.getUserPermissions(selfUser);
 		if (!permissions.contains(Permission.MANAGE_CHANNEL)) return;
+		this.discordManager.ensureWebhook(configChannel);
 
 		String configChannelTopic = ConfigUtil.getString(ConfigPath.CHANNEL_TOPIC);
 		configChannel.getManager().setTopic(configChannelTopic).queue();
@@ -157,7 +158,7 @@ public class DiscordListener extends ListenerAdapter {
 		String userId = event.getUser().getId();
 		String botId = this.discordManager.getSelfUser().getId();
 		if (userId.equals(botId)) {
-			LoggerUtil.errorAndExit("Discord bot has forcefully been removed from the configured guild.");
+			LoggerUtil.errorAndExit("Discord bot has forcefully been removed from the configured server.");
 			return;
 		}
 

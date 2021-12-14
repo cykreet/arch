@@ -29,7 +29,8 @@ public class PlayerGenericListener implements Listener {
 
 		String joinMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_JOIN, placeholders, player);
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () ->
-			this.discordManager.sendMessage(joinMessage));
+			this.discordManager.sendMessage(joinMessage)
+		);
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR)
@@ -42,7 +43,8 @@ public class PlayerGenericListener implements Listener {
 
 		String quitMessage = ConfigUtil.getString(ConfigPath.MESSAGE_FORMAT_LEAVE, placeholders, player);
 		Bukkit.getScheduler().runTaskAsynchronously(Arch.getInstance(), () ->
-			this.discordManager.sendMessage(quitMessage));
+			this.discordManager.sendMessage(quitMessage)
+		);
 	}
 
 	@EventHandler(priority = EventPriority.MONITOR)
