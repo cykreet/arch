@@ -30,6 +30,7 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
+import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
@@ -151,23 +152,25 @@ public class DiscordListener extends ListenerAdapter {
 
 	@Override
 	public void onGuildMemberRemove(final GuildMemberRemoveEvent event) {
+		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_IN_SERVER)) return;
 		String discordGuildId = event.getGuild().getId();
 		String configGuildId = this.discordManager.getGuild().getId();
 		if (!discordGuildId.equals(configGuildId)) return;
 
 		String userId = event.getUser().getId();
-		String botId = this.discordManager.getSelfUser().getId();
-		if (userId.equals(botId)) {
-			LoggerUtil.errorAndExit("Discord bot has forcefully been removed from the configured server.");
-			return;
-		}
-
-		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_IN_SERVER)) return;
 		UUID playerUUID = this.database.getPlayerId(userId);
 		if (playerUUID == null) return;
 		Player player = Bukkit.getPlayer(playerUUID);
 
 		if (player == null || !player.isOnline()) return;
 		player.kickPlayer("You are no longer in the required Discord server.");
+	}
+
+	@Override
+	public void onGuildLeave(final GuildLeaveEvent event) {
+		String discordGuildId = event.getGuild().getId();
+		String configGuildId = this.discordManager.getGuild().getId();
+		if (!discordGuildId.equals(configGuildId)) return;
+		LoggerUtil.errorAndExit("Discord bot has forcefully been removed from the configured server.");
 	}
 }
