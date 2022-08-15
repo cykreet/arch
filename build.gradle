@@ -1,19 +1,14 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-
-    dependencies {
-        classpath "com.github.jengelman.gradle.plugins:shadow:5.2.0"
-    }
+plugins {
+    id "java"
+    id "checkstyle"
+    id "com.github.johnrengelman.shadow" version "7.1.2"
 }
-
-apply plugin: "java"
-apply plugin: "com.github.johnrengelman.shadow"
 
 group = "com.cykreet"
 version = "0.6.1"
-java.sourceCompatibility = JavaVersion.VERSION_16
+
+java.sourceCompatibility = JavaVersion.VERSION_17
+java.targetCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
@@ -26,12 +21,12 @@ repositories {
 }
 
 dependencies {
-    compileOnly "org.spigotmc:spigot-api:1.17-R0.1-SNAPSHOT"
+    compileOnly "org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT"
     compileOnly fileTree(include: ["*.jar"], dir: "lib")
-    compileOnly "me.clip:placeholderapi:2.10.9"
+    compileOnly "me.clip:placeholderapi:2.11.1"
     compileOnly "org.jetbrains:annotations:16.0.2"
     
-    implementation "com.github.ben-manes.caffeine:caffeine:2.9.0"
+    implementation "com.github.ben-manes.caffeine:caffeine:3.1.1"
     implementation("net.dv8tion:JDA:4.4.0_350") {
         exclude module: "opus-java"
     }
@@ -44,6 +39,7 @@ processResources {
 }
 
 shadowJar {
+    minimize()
     project.configurations.implementation.canBeResolved = true
     configurations = [project.configurations.implementation]
     archiveFileName = project.name + "-" + this.version + ".jar"

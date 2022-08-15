@@ -1,3 +1,3 @@
 {
-  "recommendations": ["redhat.vscode-yaml"]
+	"recommendations": ["redhat.vscode-yaml", "redhat.java", "vscjava.vscode-java-debug", "vscjava.vscode-java-test", "shengchen.vscode-checkstyle", "naco-siren.gradle-language"]
 }

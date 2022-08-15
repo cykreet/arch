@@ -20,7 +20,6 @@ import com.cykreet.arch.util.ConfigUtil;
 import com.cykreet.arch.util.LoggerUtil;
 import com.cykreet.arch.util.enums.ConfigPath;
 
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -87,7 +86,7 @@ public class Arch extends JavaPlugin {
 		}
 
 		if (!missingPermissions.isEmpty()) {
-			String stringifiedPermissions = StringUtils.join(missingPermissions, ", ");
+			String stringifiedPermissions = String.join(", ", missingPermissions);
 			String message = String.format(
 				"Discord bot is missing required permissions: %s",
 				stringifiedPermissions
