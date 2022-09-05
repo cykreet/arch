@@ -1,6 +1,6 @@
 name: Arch
 version: ${projectVersion}
 main: com.cykreet.arch.Arch
-api-version: 1.17
+api-version: 1.19
 
 softdepend: [PlaceholderAPI]

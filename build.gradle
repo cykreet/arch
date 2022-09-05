@@ -2,6 +2,7 @@ plugins {
     id "java"
     id "checkstyle"
     id "com.github.johnrengelman.shadow" version "7.1.2"
+    // id "org.jetbrains.kotlin.jvm" version "1.7.10"
 }
 
 group = "com.cykreet"
@@ -21,6 +22,7 @@ repositories {
 }
 
 dependencies {
+    // compileOnly "org.jetbrains.kotlin:kotlin-stdlib:1.7.10"
     compileOnly "org.spigotmc:spigot-api:1.19-R0.1-SNAPSHOT"
     compileOnly fileTree(include: ["*.jar"], dir: "lib")
     compileOnly "me.clip:placeholderapi:2.11.1"
