@@ -6,7 +6,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.EnumSet;
 
-import javax.security.auth.login.LoginException;
+import org.jetbrains.annotations.NotNull;
 
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.listeners.DiscordListener;
@@ -17,8 +17,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import org.jetbrains.annotations.NotNull;
-
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.Permission;
@@ -26,9 +24,9 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.SelfUser;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.Webhook;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
@@ -36,8 +34,8 @@ public class DiscordManager extends Manager {
 	private Webhook destinationWebhook;
 	private JDA client;
 	public static final Permission[] PERMISSIONS = {
-		Permission.MESSAGE_READ,
-		Permission.MESSAGE_WRITE,
+		Permission.VIEW_CHANNEL,
+		Permission.MESSAGE_SEND,
 		Permission.MESSAGE_EMBED_LINKS,
 		Permission.MANAGE_WEBHOOKS,
 		Permission.MANAGE_CHANNEL,
@@ -50,12 +48,14 @@ public class DiscordManager extends Manager {
 		GatewayIntent.GUILD_MESSAGES,
 	};
 	private final CacheFlag[] disabledCaches = {
-		CacheFlag.EMOTE,
+		CacheFlag.EMOJI,
 		CacheFlag.ACTIVITY,
 		CacheFlag.VOICE_STATE,
 		CacheFlag.ONLINE_STATUS,
 		CacheFlag.CLIENT_STATUS,
-		CacheFlag.MEMBER_OVERRIDES
+		CacheFlag.MEMBER_OVERRIDES,
+		CacheFlag.STICKER,
+		CacheFlag.SCHEDULED_EVENTS
 	};
 
 	public void login(@NotNull final String token) {
@@ -68,7 +68,8 @@ public class DiscordManager extends Manager {
 
 			this.client = builder.build();
 			this.client.awaitReady();
-		} catch (LoginException exception) {
+			// todo: gateway intent was not granted, could give a warning
+		} catch (IllegalStateException exception) {
 			LoggerUtil.errorAndExit("Failed to establish connection with Discord:", exception);
 		} catch (Exception exception) {
 			LoggerUtil.errorAndExit("An unknown error occurred whilst starting the bot:", exception);

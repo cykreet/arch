@@ -22,7 +22,7 @@
 
 <module name="Checker">
   <module name="SuppressionFilter">
-    <property name="file" value=".checkstyle/suppression.xml"/>
+    <property name="file" value="${config_loc}/suppression.xml"/>
   </module>
   <!--
       If you set the basedir property below, then all reported file

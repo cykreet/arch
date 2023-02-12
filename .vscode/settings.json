@@ -1,8 +1,9 @@
 {
-  "java.configuration.updateBuildConfiguration": "automatic",
-  "yaml.schemas": {
-    "https://json.schemastore.org/bukkit-plugin": "plugin.yml"
-  },
-  "java.checkstyle.configuration": "${workspaceFolder}/.checkstyle/checkstyle.xml",
-  "java.checkstyle.version": "9.1"
+	"java.configuration.updateBuildConfiguration": "automatic",
+	"yaml.schemas": {
+		"https://json.schemastore.org/bukkit-plugin": "plugin.yml"
+	},
+	"java.checkstyle.configuration": "${workspaceFolder}/.checkstyle/checkstyle.xml",
+	"java.checkstyle.version": "9.1",
+	"java.compile.nullAnalysis.mode": "disabled"
 }

@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.UUID;
 
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+
 import com.cykreet.arch.Arch;
 import com.cykreet.arch.managers.CodesManager;
 import com.cykreet.arch.managers.DatabaseManager;
@@ -18,22 +22,18 @@ import com.cykreet.arch.util.enums.Message;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
-
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.PrivateChannel;
 import net.dv8tion.jda.api.entities.SelfUser;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildBanEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class DiscordListener extends ListenerAdapter {
@@ -71,7 +71,12 @@ public class DiscordListener extends ListenerAdapter {
 	}
 
 	@Override
-	public void onGuildMessageReceived(final GuildMessageReceivedEvent event) {
+	public void onMessageReceived(final MessageReceivedEvent event) {
+		if (event.getChannelType() == ChannelType.PRIVATE) {
+			this.onPrivateMessageReceived(event);
+			return;
+		}
+
 		if (!ConfigUtil.contains(ConfigPath.MESSAGE_FORMAT_CHAT)) return;
 		String discordChannelId = event.getChannel().getId();
 		String configChannelId = this.discordManager.getChannel().getId();
@@ -95,11 +100,9 @@ public class DiscordListener extends ListenerAdapter {
 		Bukkit.broadcastMessage(message);
 	}
 
-	@Override
-	public void onPrivateMessageReceived(final PrivateMessageReceivedEvent event) {
+	public void onPrivateMessageReceived(final MessageReceivedEvent event) {
 		if (!ConfigUtil.contains(ConfigPath.AUTH_NOT_LINKED)) return;
-
-		PrivateChannel channel = event.getChannel();
+		PrivateChannel channel = event.getChannel().asPrivateChannel();
 		User user = event.getAuthor();
 		String userId = user.getId();
 		if (user.isBot()) return;
