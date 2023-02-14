@@ -46,6 +46,7 @@ public class DiscordManager extends Manager {
 		GatewayIntent.DIRECT_MESSAGES,
 		GatewayIntent.GUILD_WEBHOOKS,
 		GatewayIntent.GUILD_MESSAGES,
+		GatewayIntent.MESSAGE_CONTENT
 	};
 	private final CacheFlag[] disabledCaches = {
 		CacheFlag.EMOJI,
